@@ -70,6 +70,8 @@ pub fn decode(data: &str) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
+    // test data from https://dgc.a-sit.at/ehn/generate
+    
     use rustc_serialize::hex::ToHex;
 
     use super::*;
