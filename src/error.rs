@@ -1,14 +1,14 @@
-use aws_nitro_enclaves_cose::error::COSEError;
+use cose::errors::CoseError;
 use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
     NotEnoughData(usize),
     InvalidPrefix(String),
-    Base45DecodeError(base45::DecodeError),
-    DeflateError(String),
-    CoseError(COSEError),
-    TranscodeError(serde_json::error::Error),
+    Base45Decode(base45::DecodeError),
+    Deflate(String),
+    Cose(CoseError),
+    Transcode(serde_json::error::Error),
 }
 
 impl fmt::Display for Error {
@@ -23,29 +23,29 @@ impl fmt::Display for Error {
             InvalidPrefix(found_prefix) => {
                 write!(f, "Invalid header. Expected 'HC1:', found {}", found_prefix)
             }
-            Base45DecodeError(e) => write!(f, "Cannot base45 decode the data: {}", e),
-            DeflateError(e) => write!(f, "Could not decompress the data: {}", e),
-            CoseError(e) => write!(f, "Could not parse COSE data: {}", e),
-            TranscodeError(e) => write!(f, "Could not convert CBOR data to JSON: {}", e),
+            Base45Decode(e) => write!(f, "Cannot base45 decode the data: {}", e),
+            Deflate(e) => write!(f, "Could not decompress the data: {}", e),
+            Cose(e) => write!(f, "Could not parse COSE data: {:?}", e),
+            Transcode(e) => write!(f, "Could not convert CBOR data to JSON: {}", e),
         }
     }
 }
 
 impl From<base45::DecodeError> for Error {
     fn from(e: base45::DecodeError) -> Self {
-        Error::Base45DecodeError(e)
+        Error::Base45Decode(e)
     }
 }
 
-impl From<COSEError> for Error {
-    fn from(e: COSEError) -> Self {
-        Error::CoseError(e)
+impl From<CoseError> for Error {
+    fn from(e: CoseError) -> Self {
+        Error::Cose(e)
     }
 }
 
 impl From<serde_json::error::Error> for Error {
     fn from(e: serde_json::error::Error) -> Self {
-        Error::TranscodeError(e)
+        Error::Transcode(e)
     }
 }
 
@@ -53,9 +53,8 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use Error::*;
         match self {
-            Base45DecodeError(e) => Some(e),
-            CoseError(e) => Some(e),
-            TranscodeError(e) => Some(e),
+            Base45Decode(e) => Some(e),
+            Transcode(e) => Some(e),
             _ => None,
         }
     }

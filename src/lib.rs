@@ -1,4 +1,3 @@
-use aws_nitro_enclaves_cose::COSESign1;
 use error::Error;
 mod error;
 
@@ -22,15 +21,16 @@ fn decode_base45(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 fn decompress(data: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let decompressed = inflate::inflate_bytes_zlib(&data).map_err(Error::DeflateError)?;
+    let decompressed = inflate::inflate_bytes_zlib(&data).map_err(Error::Deflate)?;
     Ok(decompressed)
 }
 
-fn parse_cose_payload(data: &[u8]) -> Result<Vec<u8>, Error> {
-    let sign1 = COSESign1::from_bytes(data)?;
-    let payload = sign1.get_payload(None)?;
+fn parse_cose_payload(data: Vec<u8>) -> Result<Vec<u8>, Error> {
+    let mut sign1 = cose::sign::CoseSign::new();
+    sign1.bytes = data;
+    sign1.init_decoder(None)?;
 
-    Ok(payload)
+    Ok(sign1.payload)
 }
 
 fn cbor_to_json(data: &[u8]) -> Result<String, Error> {
@@ -54,7 +54,7 @@ pub fn decode_to_json_string(data: &str) -> Result<String, Error> {
     let decompressed = decompress(decoded)?;
 
     // parse cose payload
-    let payload = parse_cose_payload(&decompressed)?;
+    let payload = parse_cose_payload(decompressed)?;
 
     // converts CBOR data to JSON
     let json_str = cbor_to_json(&payload)?;
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn it_parse_cose_payload() {
         let data = hex::decode("d2844da20448d919375fc1e7b6b20126a0590133a4041a60d9b00c061a60d70d0c01624154390103a101a4617681aa62646e01626d616d4f52472d3130303033303231356276706a313131393334393030376264746a323032312d30322d313862636f624154626369783155524e3a555643493a30313a41543a31303830373834334639344145453045453530393346424332353442443831332342626d706c45552f312f32302f31353238626973781b4d696e6973747279206f66204865616c74682c20417573747269616273640262746769383430353339303036636e616da463666e74754d5553544552465241553c474f455353494e47455262666e754d7573746572667261752d47c3b6c39f696e67657263676e74684741425249454c4562676e684761627269656c656376657265312e322e3163646f626a313939382d30322d32365840a91d6ed0869c0ca4d7896a37d77ab7ef406e6469adfdba1ecb336f84b77145bcfa852fe3a4af3cca0e0f7770e1c034d5d2facad829f6fec65b3c5321b9eeca88").unwrap();
-        let payload = parse_cose_payload(&data).unwrap().to_hex();
+        let payload = parse_cose_payload(data).unwrap().to_hex();
 
         let expected = "a4041a60d9b00c061a60d70d0c01624154390103a101a4617681aa62646e01626d616d4f52472d3130303033303231356276706a313131393334393030376264746a323032312d30322d313862636f624154626369783155524e3a555643493a30313a41543a31303830373834334639344145453045453530393346424332353442443831332342626d706c45552f312f32302f31353238626973781b4d696e6973747279206f66204865616c74682c20417573747269616273640262746769383430353339303036636e616da463666e74754d5553544552465241553c474f455353494e47455262666e754d7573746572667261752d47c3b6c39f696e67657263676e74684741425249454c4562676e684761627269656c656376657265312e322e3163646f626a313939382d30322d3236";
         assert_eq!(expected, payload);
