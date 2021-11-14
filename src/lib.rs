@@ -1,5 +1,39 @@
 use error::Error;
-mod error;
+use trustlist::TrustList;
+pub mod error;
+pub mod trustlist;
+
+#[derive(Debug)]
+pub enum CertValidity {
+    Valid,
+    Expired,
+    NotValidYet,
+    InvalidSignature,
+    ExpiredCertificate,
+    MissingKid,
+    KeyNotInTrustList,
+}
+
+#[derive(Debug)]
+pub struct Cert {
+    data: serde_json::Value,
+    kid: Vec<u8>,
+    validity: CertValidity,
+}
+
+impl Cert {
+    pub fn new(data: serde_json::Value, kid: Vec<u8>, validity: CertValidity) -> Self {
+        Cert {
+            data,
+            kid,
+            validity,
+        }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        matches!(self.validity, CertValidity::Valid)
+    }
+}
 
 fn remove_prefix(data: &'_ str) -> Result<&'_ str, Error> {
     // check minimum data length
@@ -60,6 +94,51 @@ pub fn decode_to_json_string(data: &str) -> Result<String, Error> {
     let json_str = cbor_to_json(&payload)?;
 
     Ok(json_str)
+}
+
+pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, Error> {
+    // remove prefix
+    let data = remove_prefix(data)?;
+
+    // base45 decode
+    let decoded = decode_base45(data)?;
+
+    // decompress the data
+    let decompressed = decompress(decoded)?;
+
+    let mut sign1 = cose::sign::CoseSign::new();
+    sign1.bytes = decompressed;
+    sign1.init_decoder(None);
+
+    // converts CBOR data to JSON
+    let json_data = cbor_to_json(&sign1.payload)?;
+    let json_data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
+
+    // if the kid (key id) is missing in the header we can't validate
+    if sign1.header.kid.is_none() {
+        return Ok(Cert::new(json_data, vec![], CertValidity::MissingKid));
+    }
+
+    let kid = sign1.header.kid.clone().unwrap();
+
+    let key = trustlist.get_key(kid.clone());
+
+    // if we don't have the given key in our trust list we can't validate
+    if key.is_none() {
+        return Ok(Cert::new(json_data, kid, CertValidity::KeyNotInTrustList));
+    }
+
+    // TODO: validate possible failure here
+    dbg!(sign1.key(&key.unwrap()));
+    let result = sign1.decode(None, None);
+
+    if result.is_err() {
+        dbg!(&result);
+        return Ok(Cert::new(json_data, kid, CertValidity::InvalidSignature));
+    }
+
+    // TODO: validate time validity for certificate and signing key
+    Ok(Cert::new(json_data, kid, CertValidity::Valid))
 }
 
 pub fn decode(data: &str) -> Result<serde_json::Value, Error> {
@@ -137,5 +216,25 @@ mod tests {
 
         let expected: serde_json::Value = serde_json::from_str("{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}").unwrap();
         assert_eq!(expected, json_str);
+    }
+
+    #[test]
+    fn it_validates() {
+        let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
+        let mut trustlist = TrustList::new();
+        let kid = vec![217, 25, 55, 95, 193, 231, 182, 178];
+        let key_x = vec![
+            52, 169, 238, 223, 58, 39, 16, 38, 141, 145, 104, 110, 105, 174, 211, 9, 34, 139, 157,
+            236, 157, 27, 176, 169, 85, 158, 223, 248, 63, 193, 92, 253,
+        ];
+        let key_y = vec![
+            139, 125, 58, 92, 14, 98, 94, 145, 228, 68, 246, 85, 82, 68, 153, 153, 136, 110, 180,
+            192, 235, 133, 232, 58, 177, 252, 12, 69, 218, 165, 221, 166,
+        ];
+        trustlist.add(kid, key_x, key_y);
+
+        let result = validate(data, &trustlist);
+        dbg!(result);
+        // TODO: this one does not work yet!
     }
 }
