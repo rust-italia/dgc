@@ -1,4 +1,3 @@
-use cose::errors::CoseError;
 use std::fmt;
 
 #[derive(Debug)]
@@ -7,7 +6,6 @@ pub enum Error {
     InvalidPrefix(String),
     Base45Decode(base45::DecodeError),
     Deflate(String),
-    Cose(CoseError),
     Transcode(serde_json::error::Error),
 }
 
@@ -25,7 +23,6 @@ impl fmt::Display for Error {
             }
             Base45Decode(e) => write!(f, "Cannot base45 decode the data: {}", e),
             Deflate(e) => write!(f, "Could not decompress the data: {}", e),
-            Cose(e) => write!(f, "Could not parse COSE data: {:?}", e),
             Transcode(e) => write!(f, "Could not convert CBOR data to JSON: {}", e),
         }
     }
@@ -34,12 +31,6 @@ impl fmt::Display for Error {
 impl From<base45::DecodeError> for Error {
     fn from(e: base45::DecodeError) -> Self {
         Error::Base45Decode(e)
-    }
-}
-
-impl From<CoseError> for Error {
-    fn from(e: CoseError) -> Self {
-        Error::Cose(e)
     }
 }
 

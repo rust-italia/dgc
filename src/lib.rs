@@ -10,6 +10,7 @@ pub enum CertValidity {
     NotValidYet,
     InvalidSignature,
     ExpiredCertificate,
+    CertificateSignatureExpired,
     MissingKid,
     KeyNotInTrustList,
 }
@@ -60,11 +61,18 @@ fn decompress(data: Vec<u8>) -> Result<Vec<u8>, Error> {
 }
 
 fn parse_cose_payload(data: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let mut sign1 = cose::sign::CoseSign::new();
-    sign1.bytes = data;
-    sign1.init_decoder(None)?;
+    // TODO: proper validation and error handling
+    let cwt: ciborium::value::Value = ciborium::de::from_reader(data.as_slice()).unwrap();
+    let (_tag_id, cwt_content) = cwt.as_tag().unwrap();
+    let payload = cwt_content
+        .as_array()
+        .unwrap()
+        .get(2)
+        .unwrap()
+        .as_bytes()
+        .unwrap();
 
-    Ok(sign1.payload)
+    Ok(payload.clone())
 }
 
 fn cbor_to_json(data: &[u8]) -> Result<String, Error> {
@@ -106,39 +114,42 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, Error> {
     // decompress the data
     let decompressed = decompress(decoded)?;
 
-    let mut sign1 = cose::sign::CoseSign::new();
-    sign1.bytes = decompressed;
-    sign1.init_decoder(None);
+    // TODO: implement validation from scratch following steps below
+    todo!();
 
-    // converts CBOR data to JSON
-    let json_data = cbor_to_json(&sign1.payload)?;
-    let json_data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
+    // let mut sign1 = cose::sign::CoseSign::new();
+    // sign1.bytes = decompressed;
+    // sign1.init_decoder(None);
 
-    // if the kid (key id) is missing in the header we can't validate
-    if sign1.header.kid.is_none() {
-        return Ok(Cert::new(json_data, vec![], CertValidity::MissingKid));
-    }
+    // // converts CBOR data to JSON
+    // let json_data = cbor_to_json(&sign1.payload)?;
+    // let json_data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
 
-    let kid = sign1.header.kid.clone().unwrap();
+    // // if the kid (key id) is missing in the header we can't validate
+    // if sign1.header.kid.is_none() {
+    //     return Ok(Cert::new(json_data, vec![], CertValidity::MissingKid));
+    // }
 
-    let key = trustlist.get_key(kid.clone());
+    // let kid = sign1.header.kid.clone().unwrap();
 
-    // if we don't have the given key in our trust list we can't validate
-    if key.is_none() {
-        return Ok(Cert::new(json_data, kid, CertValidity::KeyNotInTrustList));
-    }
+    // let key = trustlist.get_key(kid.clone());
 
-    // TODO: validate possible failure here
-    dbg!(sign1.key(&key.unwrap()));
-    let result = sign1.decode(None, None);
+    // // if we don't have the given key in our trust list we can't validate
+    // if key.is_none() {
+    //     return Ok(Cert::new(json_data, kid, CertValidity::KeyNotInTrustList));
+    // }
 
-    if result.is_err() {
-        dbg!(&result);
-        return Ok(Cert::new(json_data, kid, CertValidity::InvalidSignature));
-    }
+    // // TODO: validate possible failure here
+    // dbg!(sign1.key(&key.unwrap()));
+    // let result = sign1.decode(None, None);
 
-    // TODO: validate time validity for certificate and signing key
-    Ok(Cert::new(json_data, kid, CertValidity::Valid))
+    // if result.is_err() {
+    //     dbg!(&result);
+    //     return Ok(Cert::new(json_data, kid, CertValidity::InvalidSignature));
+    // }
+
+    // // TODO: validate time validity for certificate and signing key
+    // Ok(Cert::new(json_data, kid, CertValidity::Valid))
 }
 
 pub fn decode(data: &str) -> Result<serde_json::Value, Error> {
@@ -218,23 +229,23 @@ mod tests {
         assert_eq!(expected, json_str);
     }
 
-    #[test]
-    fn it_validates() {
-        let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
-        let mut trustlist = TrustList::new();
-        let kid = vec![217, 25, 55, 95, 193, 231, 182, 178];
-        let key_x = vec![
-            52, 169, 238, 223, 58, 39, 16, 38, 141, 145, 104, 110, 105, 174, 211, 9, 34, 139, 157,
-            236, 157, 27, 176, 169, 85, 158, 223, 248, 63, 193, 92, 253,
-        ];
-        let key_y = vec![
-            139, 125, 58, 92, 14, 98, 94, 145, 228, 68, 246, 85, 82, 68, 153, 153, 136, 110, 180,
-            192, 235, 133, 232, 58, 177, 252, 12, 69, 218, 165, 221, 166,
-        ];
-        trustlist.add(kid, key_x, key_y);
+    // #[test]
+    // fn it_validates() {
+    //     let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
+    //     let mut trustlist = TrustList::new();
+    //     let kid = vec![217, 25, 55, 95, 193, 231, 182, 178];
+    //     let key_x = vec![
+    //         52, 169, 238, 223, 58, 39, 16, 38, 141, 145, 104, 110, 105, 174, 211, 9, 34, 139, 157,
+    //         236, 157, 27, 176, 169, 85, 158, 223, 248, 63, 193, 92, 253,
+    //     ];
+    //     let key_y = vec![
+    //         139, 125, 58, 92, 14, 98, 94, 145, 228, 68, 246, 85, 82, 68, 153, 153, 136, 110, 180,
+    //         192, 235, 133, 232, 58, 177, 252, 12, 69, 218, 165, 221, 166,
+    //     ];
+    //     trustlist.add(kid, key_x, key_y);
 
-        let result = validate(data, &trustlist);
-        dbg!(result);
-        // TODO: this one does not work yet!
-    }
+    //     let result = validate(data, &trustlist);
+    //     dbg!(result);
+    //     // TODO: this one does not work yet!
+    // }
 }

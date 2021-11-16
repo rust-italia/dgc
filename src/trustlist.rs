@@ -13,30 +13,14 @@ impl EddsaPublicKey {
     }
 }
 
-impl From<EddsaPublicKey> for cose::keys::CoseKey {
-    fn from(val: EddsaPublicKey) -> Self {
-        let mut key = cose::keys::CoseKey::new();
-        key.kid(val.kid);
-        key.kty(cose::keys::EC2);
-        key.alg(cose::algs::ES256); // TODO: ?
-        key.crv(cose::keys::ED25519);
-        key.x(val.x);
-        key.y(val.y);
-        key.d(vec![]); // TODO: ?
-        key.key_ops(vec![cose::keys::KEY_OPS_VERIFY]);
-
-        key
-    }
-}
-
 #[derive(Debug)]
 pub struct TrustList {
     keys: HashMap<Vec<u8>, EddsaPublicKey>,
 }
 
 impl TrustList {
-    pub fn get_key(&self, kid: Vec<u8>) -> Option<cose::keys::CoseKey> {
-        self.keys.get(&kid).map(|k| k.clone().into())
+    pub fn get_key(&self, kid: Vec<u8>) -> Option<EddsaPublicKey> {
+        self.keys.get(&kid).cloned()
     }
 }
 
@@ -336,6 +320,6 @@ mod tests {
         assert_eq!(trustlist.keys.len(), 2);
         let first_key = trustlist.get_key("25QCxBrBJvA=".as_bytes().to_vec());
         assert!(first_key.is_some());
-        assert_eq!(first_key.unwrap().kid.unwrap(), b"25QCxBrBJvA=".to_vec());
+        assert_eq!(first_key.unwrap().kid, b"25QCxBrBJvA=".to_vec());
     }
 }
