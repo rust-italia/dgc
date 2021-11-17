@@ -1,3 +1,4 @@
+use ring_compat::signature::ecdsa::p256::VerifyingKey;
 use std::{collections::HashMap, convert::TryFrom};
 
 #[derive(Debug, Clone)]
@@ -15,17 +16,20 @@ impl EddsaPublicKey {
 
 #[derive(Debug)]
 pub struct TrustList {
-    keys: HashMap<Vec<u8>, EddsaPublicKey>,
+    keys: HashMap<Vec<u8>, VerifyingKey>,
 }
 
 impl TrustList {
-    pub fn get_key(&self, kid: Vec<u8>) -> Option<EddsaPublicKey> {
-        self.keys.get(&kid).cloned()
+    pub fn get_key(&self, kid: &Vec<u8>) -> Option<&VerifyingKey> {
+        self.keys.get(kid)
     }
 }
 
 #[derive(Debug)]
 pub enum KeyFromCertificateError {}
+
+#[derive(Debug)]
+pub enum KeyParseError {}
 
 #[derive(Debug)]
 pub enum TrustListFromJsonError {
@@ -122,25 +126,44 @@ impl TrustList {
         }
     }
 
-    pub fn add(&mut self, kid: Vec<u8>, key_x: Vec<u8>, key_y: Vec<u8>) {
-        self.keys.insert(
-            kid.clone(),
-            EddsaPublicKey {
-                kid,
-                x: key_x,
-                y: key_y,
-            },
-        );
+    pub fn add(&mut self, kid: Vec<u8>, key: VerifyingKey) {
+        self.keys.insert(kid.clone(), key);
     }
 
     pub fn add_key_from_certificate(
         &mut self,
+        kid: Vec<u8>,
         base64_cert: &str,
     ) -> Result<(), KeyFromCertificateError> {
-        let certificate_der = base64::decode(base64_cert).unwrap();
-        let parsed_cert = der_parser::parse_der(&certificate_der).unwrap();
+        // TODO: extract the key instead of using hardcoded values
+        let raw_key_bytes: Vec<u8> = vec![
+            4, 183, 152, 112, 15, 71, 9, 80, 30, 83, 121, 2, 0, 104, 78, 231, 46, 55, 158, 127, 75,
+            213, 230, 102, 166, 71, 125, 36, 140, 74, 198, 57, 196, 94, 25, 237, 251, 116, 58, 230,
+            20, 7, 142, 168, 130, 218, 141, 4, 226, 5, 124, 220, 156, 246, 140, 197, 101, 29, 245,
+            34, 189, 101, 23, 177, 205,
+        ];
+        let key = VerifyingKey::new(raw_key_bytes.as_slice());
+        dbg!(&key, raw_key_bytes.len());
+        self.keys.insert(kid, key.unwrap());
+        // let certificate_der = base64::decode(base64_cert).unwrap();
+        // let parsed_cert = der_parser::parse_der(&certificate_der).unwrap();
+        // dbg!(parsed_cert.1);
 
-        dbg!(parsed_cert);
+        // dbg!(parsed_cert);
+        Ok(())
+    }
+
+    pub fn add_key_from_str(
+        &mut self,
+        kid: Vec<u8>,
+        base64_der_public_key: &str,
+    ) -> Result<(), KeyParseError> {
+        // TODO: propagate errors correctly and remove unwrap()
+        let der_data = base64::decode(base64_der_public_key).unwrap();
+        // The last 65 bytes of are the ones needed by VerifyingKey
+        let key = VerifyingKey::new(&der_data[der_data.len() - 65..]).unwrap();
+        self.keys.insert(kid, key);
+
         Ok(())
     }
 }
@@ -239,22 +262,12 @@ impl TryFrom<serde_json::Value> for TrustList {
             if !public_key_pem.is_string() {
                 return Err(TrustListFromJsonError::InvalidPublicKeyPem(kid.clone()));
             }
-            let public_key_pem = public_key_pem.as_str().unwrap();
-            let public_key_pem = base64::decode(public_key_pem)
-                .map_err(|e| TrustListFromJsonError::PublicKeyPemDecodeError(kid.clone(), e))?;
-
-            // Manually parses the BER structure to extract x,y from EDDSA public keys
-            // TODO: better error handling here or maybe find a library to do this
-            let parsed_public_key = der_parser::parse_der(&public_key_pem).unwrap().1;
-            let parsed_public_key = &parsed_public_key.content.as_sequence().unwrap()[1];
-            let parsed_public_key = &parsed_public_key.content.as_bitstring().unwrap().data;
-            let public_key_x = parsed_public_key[1..=32].to_vec();
-            let public_key_y = parsed_public_key[33..=64].to_vec();
-
-            // creates key
+            let base64_der_public_key = public_key_pem.as_str().unwrap();
             let kid = kid.clone().into_bytes();
-            let key = EddsaPublicKey::new(kid.clone(), public_key_x, public_key_y);
-            trustlist.keys.insert(kid, key);
+            // TODO: propagate error and remove unwrap()
+            trustlist
+                .add_key_from_str(kid, base64_der_public_key)
+                .unwrap();
         }
 
         Ok(trustlist)
@@ -263,18 +276,28 @@ impl TryFrom<serde_json::Value> for TrustList {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use serde_json::json;
     use std::convert::TryInto;
 
-    use serde_json::json;
-
-    use super::*;
+    #[test]
+    fn it_adds_a_public_key_from_a_certificate() {
+        let base64_cert = "MIIEHjCCAgagAwIBAgIUM5lJeGCHoRF1raR6cbZqDV4vPA8wDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCSVQxHzAdBgNVBAoMFk1pbmlzdGVybyBkZWxsYSBTYWx1dGUxHjAcBgNVBAMMFUl0YWx5IERHQyBDU0NBIFRFU1QgMTAeFw0yMTA1MDcxNzAyMTZaFw0yMzA1MDgxNzAyMTZaME0xCzAJBgNVBAYTAklUMR8wHQYDVQQKDBZNaW5pc3Rlcm8gZGVsbGEgU2FsdXRlMR0wGwYDVQQDDBRJdGFseSBER0MgRFNDIFRFU1QgMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aajgb8wgbwwHwYDVR0jBBgwFoAUS2iy4oMAoxUY87nZRidUqYg9yyMwagYDVR0fBGMwYTBfoF2gW4ZZbGRhcDovL2NhZHMuZGdjLmdvdi5pdC9DTj1JdGFseSUyMERHQyUyMENTQ0ElMjBURVNUJTIwMSxPPU1pbmlzdGVybyUyMGRlbGxhJTIwU2FsdXRlLEM9SVQwHQYDVR0OBBYEFNSEwjzu61pAMqliNhS9vzGJFqFFMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAgEAIF74yHgzCGdor5MaqYSvkS5aog5+7u52TGggiPl78QAmIpjPO5qcYpJZVf6AoL4MpveEI/iuCUVQxBzYqlLACjSbZEbtTBPSzuhfvsf9T3MUq5cu10lkHKbFgApUDjrMUnG9SMqmQU2Cv5S4t94ec2iLmokXmhYP/JojRXt1ZMZlsw/8/lRJ8vqPUorJ/fMvOLWDE/fDxNhh3uK5UHBhRXCT8MBep4cgt9cuT9O4w1JcejSr5nsEfeo8u9Pb/h6MnmxpBSq3JbnjONVK5ak7iwCkLr5PMk09ncqG+/8Kq+qTjNC76IetS9ST6bWzTZILX4BD1BL8bHsFGgIeeCO0GqalFZAsbapnaB+36HVUZVDYOoA+VraIWECNxXViikZdjQONaeWDVhCxZ/vBl1/KLAdX3OPxRwl/jHLnaSXeqr/zYf9a8UqFrpadT0tQff/q3yH5hJRJM0P6Yp5CPIEArJRW6ovDBbp3DVF2GyAI1lFA2Trs798NN6qf7SkuySz5HSzm53g6JsLY/HLzdwJPYLObD7U+x37n+DDi4Wa6vM5xdC7FZ5IyWXuT1oAa9yM4h6nW3UvC+wNUusW6adqqtdd4F1gHPjCf5lpW5Ye1bdLUmO7TGlePmbOkzEB08Mlc6atl/vkx/crfl4dq1LZivLgPBwDzE8arIk0f2vCx1+4=";
+        let mut trustlist = TrustList::new();
+        assert!(trustlist
+            .add_key_from_certificate(vec![1, 2, 3], base64_cert)
+            .is_ok());
+    }
 
     #[test]
-    fn it_adds_the_public_key_from_a_certificate() {
-        let cert = "MIIEHjCCAgagAwIBAgIUM5lJeGCHoRF1raR6cbZqDV4vPA8wDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCSVQxHzAdBgNVBAoMFk1pbmlzdGVybyBkZWxsYSBTYWx1dGUxHjAcBgNVBAMMFUl0YWx5IERHQyBDU0NBIFRFU1QgMTAeFw0yMTA1MDcxNzAyMTZaFw0yMzA1MDgxNzAyMTZaME0xCzAJBgNVBAYTAklUMR8wHQYDVQQKDBZNaW5pc3Rlcm8gZGVsbGEgU2FsdXRlMR0wGwYDVQQDDBRJdGFseSBER0MgRFNDIFRFU1QgMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aajgb8wgbwwHwYDVR0jBBgwFoAUS2iy4oMAoxUY87nZRidUqYg9yyMwagYDVR0fBGMwYTBfoF2gW4ZZbGRhcDovL2NhZHMuZGdjLmdvdi5pdC9DTj1JdGFseSUyMERHQyUyMENTQ0ElMjBURVNUJTIwMSxPPU1pbmlzdGVybyUyMGRlbGxhJTIwU2FsdXRlLEM9SVQwHQYDVR0OBBYEFNSEwjzu61pAMqliNhS9vzGJFqFFMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAgEAIF74yHgzCGdor5MaqYSvkS5aog5+7u52TGggiPl78QAmIpjPO5qcYpJZVf6AoL4MpveEI/iuCUVQxBzYqlLACjSbZEbtTBPSzuhfvsf9T3MUq5cu10lkHKbFgApUDjrMUnG9SMqmQU2Cv5S4t94ec2iLmokXmhYP/JojRXt1ZMZlsw/8/lRJ8vqPUorJ/fMvOLWDE/fDxNhh3uK5UHBhRXCT8MBep4cgt9cuT9O4w1JcejSr5nsEfeo8u9Pb/h6MnmxpBSq3JbnjONVK5ak7iwCkLr5PMk09ncqG+/8Kq+qTjNC76IetS9ST6bWzTZILX4BD1BL8bHsFGgIeeCO0GqalFZAsbapnaB+36HVUZVDYOoA+VraIWECNxXViikZdjQONaeWDVhCxZ/vBl1/KLAdX3OPxRwl/jHLnaSXeqr/zYf9a8UqFrpadT0tQff/q3yH5hJRJM0P6Yp5CPIEArJRW6ovDBbp3DVF2GyAI1lFA2Trs798NN6qf7SkuySz5HSzm53g6JsLY/HLzdwJPYLObD7U+x37n+DDi4Wa6vM5xdC7FZ5IyWXuT1oAa9yM4h6nW3UvC+wNUusW6adqqtdd4F1gHPjCf5lpW5Ye1bdLUmO7TGlePmbOkzEB08Mlc6atl/vkx/crfl4dq1LZivLgPBwDzE8arIk0f2vCx1+4=";
+    fn it_adds_a_public_key() {
+        let base64_der_public_key = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt5hwD0cJUB5TeQIAaE7nLjeef0vV5mamR30kjErGOcReGe37dDrmFAeOqILajQTiBXzcnPaMxWUd9SK9ZRexzQ==";
         let mut trustlist = TrustList::new();
-
-        assert!(trustlist.add_key_from_certificate(cert).is_ok());
+        trustlist
+            .add_key_from_str(vec![1, 2, 3], base64_der_public_key)
+            .unwrap();
+        assert_eq!(trustlist.keys.len(), 1);
+        assert!(trustlist.get_key(&vec![1, 2, 3]).is_some())
     }
 
     #[test]
@@ -318,8 +341,7 @@ mod tests {
 
         let trustlist: TrustList = data.try_into().unwrap();
         assert_eq!(trustlist.keys.len(), 2);
-        let first_key = trustlist.get_key("25QCxBrBJvA=".as_bytes().to_vec());
+        let first_key = trustlist.get_key(&"25QCxBrBJvA=".as_bytes().to_vec());
         assert!(first_key.is_some());
-        assert_eq!(first_key.unwrap().kid, b"25QCxBrBJvA=".to_vec());
     }
 }

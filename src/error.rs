@@ -1,11 +1,14 @@
 use std::fmt;
 
+use crate::cwt::CwtDecodeError;
+
 #[derive(Debug)]
 pub enum Error {
     NotEnoughData(usize),
     InvalidPrefix(String),
     Base45Decode(base45::DecodeError),
     Deflate(String),
+    CwtDecode(CwtDecodeError),
     Transcode(serde_json::error::Error),
 }
 
@@ -23,6 +26,7 @@ impl fmt::Display for Error {
             }
             Base45Decode(e) => write!(f, "Cannot base45 decode the data: {}", e),
             Deflate(e) => write!(f, "Could not decompress the data: {}", e),
+            CwtDecode(e) => write!(f, "Could not decode CWT data: {}", e),
             Transcode(e) => write!(f, "Could not convert CBOR data to JSON: {}", e),
         }
     }
@@ -40,12 +44,19 @@ impl From<serde_json::error::Error> for Error {
     }
 }
 
+impl From<CwtDecodeError> for Error {
+    fn from(e: CwtDecodeError) -> Self {
+        Error::CwtDecode(e)
+    }
+}
+
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use Error::*;
         match self {
             Base45Decode(e) => Some(e),
             Transcode(e) => Some(e),
+            CwtDecode(e) => Some(e),
             _ => None,
         }
     }
