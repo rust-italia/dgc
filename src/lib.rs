@@ -117,6 +117,8 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
     }
     let kid = cwt.header_protected.kid.clone().unwrap();
 
+    // TODO: validate alg in header as well
+
     let key = trustlist.get_key(&kid);
     if key.is_none() {
         return Ok(Cert::new(

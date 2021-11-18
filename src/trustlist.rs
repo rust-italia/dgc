@@ -1,5 +1,6 @@
 use ring_compat::signature::ecdsa::p256::VerifyingKey;
 use std::{collections::HashMap, convert::TryFrom};
+use thiserror::Error;
 
 #[derive(Debug, Clone)]
 pub struct EddsaPublicKey {
@@ -31,92 +32,34 @@ pub enum KeyFromCertificateError {}
 #[derive(Debug)]
 pub enum KeyParseError {}
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum TrustListFromJsonError {
+    #[error("The given JSON is not an object")]
     InvalidRootType,
+    #[error("Key '{0}' is not an object")]
     KeyIsNotObject(String),
+    #[error("Key '{0}' does not contain 'publicKeyAlgorithm'")]
     MissingPublicKeyAlgorithm(String),
+    #[error("'publicKeyAlgorithm' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithm(String),
+    #[error("Key '{0}' does not contain 'publicKeyAlgorithm.name'")]
     MissingPublicKeyAlgorithmName(String),
+    #[error("'publicKeyAlgorithm.name' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithmName(String),
+    #[error("Key '{0}' 'publicKeyAlgorithm.name' is '{1}' where only 'ECDSA' is supported")]
     UnsupportedPublicKeyAlgorithmName(String, String),
+    #[error("Key '{0}' does not contain 'publicKeyAlgorithm.namedCurve'")]
     MissingPublicKeyAlgorithmCurve(String),
+    #[error("'publicKeyAlgorithm.namedCurve' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithmCurve(String),
+    #[error("Key '{0}' 'publicKeyAlgorithm.namedCurve' is '{0}' where only 'P-256' is supported")]
     UnsupportedPublicKeyAlgorithmCurve(String, String),
+    #[error("Key '{0}' does not contain 'publicKeyPem'")]
     MissingPublicKeyPem(String),
+    #[error("'publicKeyPem' for key '{0}' is not a string")]
     InvalidPublicKeyPem(String),
-    PublicKeyPemDecodeError(String, base64::DecodeError),
-}
-
-impl std::fmt::Display for TrustListFromJsonError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use TrustListFromJsonError::*;
-        match self {
-            InvalidRootType => write!(f, "The given JSON is not an object"),
-            KeyIsNotObject(kid) => write!(f, "Key '{}' is not an object", kid),
-            MissingPublicKeyAlgorithm(kid) => {
-                write!(f, "Key '{}' does not contain 'publicKeyAlgorithm'", kid)
-            }
-            InvalidPublicKeyAlgorithm(kid) => {
-                write!(f, "'publicKeyAlgorithm' for key '{}' is not a string", kid)
-            }
-            MissingPublicKeyAlgorithmName(kid) => {
-                write!(
-                    f,
-                    "Key '{}' does not contain 'publicKeyAlgorithm.name'",
-                    kid
-                )
-            }
-            InvalidPublicKeyAlgorithmName(kid) => write!(
-                f,
-                "'publicKeyAlgorithm.name' for key '{}' is not a string",
-                kid
-            ),
-            UnsupportedPublicKeyAlgorithmName(kid, found) => write!(
-                f,
-                "Key '{}' 'publicKeyAlgorithm.name' is '{}' where only 'ECDSA' is supported",
-                kid, found
-            ),
-            MissingPublicKeyAlgorithmCurve(kid) => write!(
-                f,
-                "Key '{}' does not contain 'publicKeyAlgorithm.namedCurve'",
-                kid
-            ),
-            InvalidPublicKeyAlgorithmCurve(kid) => write!(
-                f,
-                "'publicKeyAlgorithm.namedCurve' for key '{}' is not a string",
-                kid
-            ),
-            UnsupportedPublicKeyAlgorithmCurve(kid, found) => write!(
-                f,
-                "Key '{}' 'publicKeyAlgorithm.namedCurve' is '{}' where only 'P-256' is supported",
-                kid, found
-            ),
-            MissingPublicKeyPem(kid) => {
-                write!(f, "Key '{}' does not contain 'publicKeyPem'", kid)
-            }
-            InvalidPublicKeyPem(kid) => {
-                write!(f, "'publicKeyPem' for key '{}' is not a string", kid)
-            }
-            PublicKeyPemDecodeError(kid, base64_err) => {
-                write!(
-                    f,
-                    "'publicKeyPem' for key '{}' could not be decoded: {:?}",
-                    kid, base64_err
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for TrustListFromJsonError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use TrustListFromJsonError::*;
-        match self {
-            PublicKeyPemDecodeError(_, e) => Some(e),
-            _ => None,
-        }
-    }
+    #[error("'publicKeyPem' for key '{0}' could not be decoded: {1}")]
+    PublicKeyPemDecodeError(String, #[source] base64::DecodeError),
 }
 
 impl TrustList {
@@ -126,8 +69,8 @@ impl TrustList {
         }
     }
 
-    pub fn add(&mut self, kid: Vec<u8>, key: VerifyingKey) {
-        self.keys.insert(kid.clone(), key);
+    pub fn add(&mut self, kid: &[u8], key: VerifyingKey) {
+        self.keys.insert(kid.to_vec(), key);
     }
 
     pub fn add_key_from_certificate(
