@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 lazy_static! {
-    /// populated from https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets
+    /// Populated from https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets
     /// List generated with the following Node.js snippet (for every valueset file):
     /// > for (const [key, val] of Object.entries(fileData.valueSetValues)) {
-    /// >   console.log(`m.insert("${key}", "${val.display}");`)
+    /// >
+    /// >   console.log(\`m.insert("${key}", "${val.display}");\`)
+    /// >
     /// > }
-    static ref VALUES: HashMap<&'static str, &'static str> = {
+    pub static ref VALUESET: HashMap<&'static str, &'static str> = {
         let mut m = HashMap::new();
         m.insert("840539006", "COVID-19");
         m.insert("308", "PCL Inc, PCL COVID19 Ag Rapid FIA");
