@@ -1,7 +1,6 @@
-use std::{
-    convert::{TryFrom, TryInto},
-    fmt,
-};
+use thiserror::Error;
+
+use std::convert::{TryFrom, TryInto};
 
 use ciborium::{
     ser::into_writer,
@@ -15,18 +14,25 @@ const COSE_ECDSA256: i128 = -7;
 const COSE_ECDSA384: i128 = -35;
 const COSE_ECDSA512: i128 = -36;
 
-// TODO: impl all errors
-#[derive(Debug)]
-pub enum CwtDecodeError {}
-
-impl fmt::Display for CwtDecodeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO:
-        write!(f, "sorry we failed")
-    }
+#[derive(Error, Debug)]
+pub enum CwtParseError {
+    #[error("Cannot parse the data as CBOR: {0}")]
+    CborError(#[from] ciborium::de::Error<std::io::Error>),
+    #[error("The root value is not a tag")]
+    InvalidRootValue,
+    #[error("Expected COSE_SIGN1_CBOR_TAG ({}) found {0}", COSE_SIGN1_CBOR_TAG)]
+    InvalidTag(u64),
+    #[error("The main CBOR object is not an array")]
+    InvalidParts,
+    #[error("The main CBOR array does not contain 4 parts. {0} parts found")]
+    InvalidPartsCount(usize),
+    #[error("The header section is not a binary string")]
+    HeaderNotBinary,
+    #[error("The payload section is not a binary string")]
+    PayloadNotBinary,
+    #[error("The signature section is not a binary string")]
+    SignatureNotBinary,
 }
-
-impl std::error::Error for CwtDecodeError {}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcAlg {
@@ -135,20 +141,27 @@ impl Cwt {
 }
 
 impl TryFrom<&[u8]> for Cwt {
-    type Error = CwtDecodeError;
+    type Error = CwtParseError;
 
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        // TODO: proper error handling here and remove unwrap
-        let cwt: Value = ciborium::de::from_reader(data).unwrap();
-        let (_tag_id, cwt_content) = cwt.as_tag().unwrap();
-        // TODO: check that tag id matches the CWT expected tag id
-        let parts = cwt_content.as_array().unwrap();
-        // TODO: check that there are exactly 4 parts
-        let header_protected_raw = parts[0].as_bytes().unwrap().clone();
+        let cwt: Value = ciborium::de::from_reader(data)?;
+        let (tag_id, cwt_content) = cwt.as_tag().ok_or(CwtParseError::InvalidRootValue)?;
+        if *tag_id != COSE_SIGN1_CBOR_TAG {
+            return Err(CwtParseError::InvalidTag(*tag_id));
+        }
+        let parts = cwt_content.as_array().ok_or(CwtParseError::InvalidParts)?;
+        if parts.len() != 4 {
+            return Err(CwtParseError::InvalidPartsCount(parts.len()));
+        }
+        let header_protected_raw =
+            (parts[0].as_bytes().ok_or(CwtParseError::HeaderNotBinary)?).clone();
         let header_protected: CwtHeader = header_protected_raw.as_slice().into();
         let header_unprotected = parts[1].clone();
-        let payload_raw = parts[2].as_bytes().unwrap().clone();
-        let signature = parts[3].as_bytes().unwrap().clone();
+        let payload_raw = (parts[2].as_bytes().ok_or(CwtParseError::PayloadNotBinary)?).clone();
+        let signature = (parts[3]
+            .as_bytes()
+            .ok_or(CwtParseError::SignatureNotBinary)?)
+        .clone();
         Ok(Cwt::new(
             header_protected_raw,
             header_protected,
@@ -160,7 +173,7 @@ impl TryFrom<&[u8]> for Cwt {
 }
 
 impl TryFrom<Vec<u8>> for Cwt {
-    type Error = CwtDecodeError;
+    type Error = CwtParseError;
 
     fn try_from(data: Vec<u8>) -> Result<Self, Self::Error> {
         data.as_slice().try_into()

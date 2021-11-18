@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use std::convert::TryInto;
 
-use error::Error;
+use error::ParseError;
 use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
 use trustlist::TrustList;
 pub mod cwt;
@@ -39,36 +39,36 @@ impl Cert {
     }
 }
 
-fn remove_prefix(data: &'_ str) -> Result<&'_ str, Error> {
+fn remove_prefix(data: &'_ str) -> Result<&'_ str, ParseError> {
     // check minimum data length
     if data.len() <= 4 {
-        return Err(Error::NotEnoughData(data.len()));
+        return Err(ParseError::NotEnoughData(data.len()));
     }
 
     // check HC1: header
     if &data[0..4] != "HC1:" {
-        return Err(Error::InvalidPrefix(String::from(&data[0..3])));
+        return Err(ParseError::InvalidPrefix(String::from(&data[0..3])));
     }
 
     Ok(&data[4..])
 }
 
-fn decode_base45(data: &str) -> Result<Vec<u8>, Error> {
+fn decode_base45(data: &str) -> Result<Vec<u8>, ParseError> {
     let decoded = base45::decode(data)?;
     Ok(decoded)
 }
 
-fn decompress(data: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let decompressed = inflate::inflate_bytes_zlib(&data).map_err(Error::Deflate)?;
+fn decompress(data: Vec<u8>) -> Result<Vec<u8>, ParseError> {
+    let decompressed = inflate::inflate_bytes_zlib(&data).map_err(ParseError::Deflate)?;
     Ok(decompressed)
 }
 
-fn parse_cwt_payload(data: Vec<u8>) -> Result<Cwt, Error> {
+fn parse_cwt_payload(data: Vec<u8>) -> Result<Cwt, ParseError> {
     let cwt: Cwt = data.try_into()?;
     Ok(cwt)
 }
 
-fn cbor_to_json(data: &[u8]) -> Result<String, Error> {
+fn cbor_to_json(data: &[u8]) -> Result<String, ParseError> {
     let mut output: Vec<u8> = vec![];
     // TODO: get rid of serde_cbor (and possibly of JSON entirely)
     let mut deserializer = serde_cbor::Deserializer::from_slice(data);
@@ -79,7 +79,7 @@ fn cbor_to_json(data: &[u8]) -> Result<String, Error> {
     Ok(String::from_utf8(output).unwrap())
 }
 
-pub fn decode_to_json_string(data: &str) -> Result<String, Error> {
+pub fn decode_to_json_string(data: &str) -> Result<String, ParseError> {
     // remove prefix
     let data = remove_prefix(data)?;
 
@@ -98,7 +98,7 @@ pub fn decode_to_json_string(data: &str) -> Result<String, Error> {
     Ok(json_str)
 }
 
-pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, Error> {
+pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
     // remove prefix
     let data = remove_prefix(data)?;
 
@@ -138,7 +138,7 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, Error> {
     // TODO: validate timestamps for certificate
 }
 
-pub fn decode(data: &str) -> Result<serde_json::Value, Error> {
+pub fn decode(data: &str) -> Result<serde_json::Value, ParseError> {
     let json_data = decode_to_json_string(data)?;
     let data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
     Ok(data)
@@ -146,8 +146,6 @@ pub fn decode(data: &str) -> Result<serde_json::Value, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::trustlist::EddsaPublicKey;
-
     // test data from https://dgc.a-sit.at/ehn/generate
     use super::*;
 
