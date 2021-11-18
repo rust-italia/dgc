@@ -1,6 +1,11 @@
+use serde::{Deserialize, Serialize};
+
+use super::valuesets::expand_value;
+
 /// https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/DCC.Types.schema.json
 
-pub struct VaccinationEntry {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Vaccination {
     /// disease or agent targeted
     /// https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted
     pub tg: String,
@@ -30,4 +35,16 @@ pub struct VaccinationEntry {
     /// Unique Certificate Identifier: UVCI
     /// https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/certificate_id
     pub ci: String,
+}
+
+impl Vaccination {
+    pub fn expand_values(&self) -> Self {
+        let mut expanded = self.clone();
+        expanded.tg = expand_value(&expanded.tg);
+        expanded.vp = expand_value(&expanded.vp);
+        expanded.mp = expand_value(&expanded.mp);
+        expanded.ma = expand_value(&expanded.ma);
+        expanded.co = expand_value(&expanded.co);
+        expanded
+    }
 }

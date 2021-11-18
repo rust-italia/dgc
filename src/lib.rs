@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use std::convert::TryInto;
 
+use cwt::*;
 use error::ParseError;
 use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
 use trustlist::TrustList;
@@ -10,15 +11,11 @@ pub mod cwt;
 pub mod dgc;
 pub mod error;
 pub mod trustlist;
-use cwt::*;
 
 #[derive(Debug)]
-pub enum CertValidity {
+pub enum SignatureValidity {
     Valid,
-    Expired,
-    NotValidYet,
-    InvalidSignature,
-    ExpiredCertificate,
+    Invalid,
     MissingKid,
     KeyNotInTrustList(Vec<u8>),
 }
@@ -26,16 +23,16 @@ pub enum CertValidity {
 #[derive(Debug)]
 pub struct Cert {
     data: serde_json::Value,
-    validity: CertValidity,
+    validity: SignatureValidity,
 }
 
 impl Cert {
-    pub fn new(data: serde_json::Value, validity: CertValidity) -> Self {
+    pub fn new(data: serde_json::Value, validity: SignatureValidity) -> Self {
         Cert { data, validity }
     }
 
     pub fn is_valid(&self) -> bool {
-        matches!(self.validity, CertValidity::Valid)
+        matches!(self.validity, SignatureValidity::Valid)
     }
 }
 
@@ -113,7 +110,7 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
     let data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
 
     if cwt.header_protected.kid.is_none() {
-        return Ok(Cert::new(data, CertValidity::MissingKid));
+        return Ok(Cert::new(data, SignatureValidity::MissingKid));
     }
     let kid = cwt.header_protected.kid.clone().unwrap();
 
@@ -123,7 +120,7 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
     if key.is_none() {
         return Ok(Cert::new(
             data,
-            CertValidity::KeyNotInTrustList(kid.clone()),
+            SignatureValidity::KeyNotInTrustList(kid.clone()),
         ));
     }
     let key = key.unwrap();
@@ -132,10 +129,10 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
         .verify(cwt.make_sig_structure().as_slice(), &signature)
         .is_err()
     {
-        return Ok(Cert::new(data, CertValidity::InvalidSignature));
+        return Ok(Cert::new(data, SignatureValidity::Invalid));
     }
 
-    Ok(Cert::new(data, CertValidity::Valid))
+    Ok(Cert::new(data, SignatureValidity::Valid))
 
     // TODO: validate timestamps for certificate
 }
@@ -224,6 +221,6 @@ mod tests {
         trustlist.add_key_from_str(kid, key_data).unwrap();
 
         let cert = validate(data, &trustlist).unwrap();
-        assert!(matches!(cert.validity, CertValidity::Valid));
+        assert!(matches!(cert.validity, SignatureValidity::Valid));
     }
 }

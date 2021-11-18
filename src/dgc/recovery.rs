@@ -1,6 +1,12 @@
+use serde::{Deserialize, Serialize};
+
+use super::valuesets::expand_value;
+
 /// Recovery Entry
 /// https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/DCC.Types.schema.json
-pub struct RecoveryEntry {
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Recovery {
     /// Disease agent targeted
     /// https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted
     pub tg: String,
@@ -19,4 +25,14 @@ pub struct RecoveryEntry {
     /// Unique Certificate Identifier, UVCI
     /// https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/certificate_id
     pub ci: String,
+}
+
+impl Recovery {
+    pub fn expand_values(&self) -> Self {
+        let mut expanded = self.clone();
+        expanded.tg = expand_value(&expanded.tg);
+        expanded.fr = expand_value(&expanded.fr);
+        expanded.co = expand_value(&expanded.co);
+        expanded
+    }
 }
