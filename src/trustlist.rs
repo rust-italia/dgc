@@ -2,19 +2,6 @@ use ring_compat::signature::ecdsa::p256::VerifyingKey;
 use std::{collections::HashMap, convert::TryFrom};
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
-pub struct EddsaPublicKey {
-    kid: Vec<u8>,
-    x: Vec<u8>,
-    y: Vec<u8>,
-}
-
-impl EddsaPublicKey {
-    pub fn new(kid: Vec<u8>, x: Vec<u8>, y: Vec<u8>) -> Self {
-        EddsaPublicKey { kid, x, y }
-    }
-}
-
 #[derive(Debug)]
 pub struct TrustList {
     keys: HashMap<Vec<u8>, VerifyingKey>,
@@ -26,11 +13,15 @@ impl TrustList {
     }
 }
 
-#[derive(Debug)]
-pub enum KeyFromCertificateError {}
-
-#[derive(Debug)]
-pub enum KeyParseError {}
+#[derive(Error, Debug)]
+pub enum KeyParseError {
+    #[error("Cannot decode base64 data: {0}")]
+    Base64DecodeError(#[from] base64::DecodeError),
+    #[error("Failed to parse X509 data: {0}")]
+    X509ParseError(#[from] x509_parser::nom::Err<x509_parser::error::X509Error>),
+    #[error("Cannot extract a valid public key from certificate: {0}")]
+    PublicKeyParseError(String),
+}
 
 #[derive(Error, Debug)]
 pub enum TrustListFromJsonError {
@@ -60,6 +51,10 @@ pub enum TrustListFromJsonError {
     InvalidPublicKeyPem(String),
     #[error("'publicKeyPem' for key '{0}' could not be decoded: {1}")]
     PublicKeyPemDecodeError(String, #[source] base64::DecodeError),
+    #[error("Cannot base64 decode key '{0}': {1}")]
+    KidBase64DecodeError(String, #[source] base64::DecodeError),
+    #[error("Cannot parse public key for key '{0}': {1}")]
+    KeyParseError(String, #[source] KeyParseError),
 }
 
 impl TrustList {
@@ -77,14 +72,13 @@ impl TrustList {
         &mut self,
         kid: Vec<u8>,
         base64_x509_cert: &str,
-    ) -> Result<(), KeyFromCertificateError> {
-        // TODO: propagate errors and remove unwrap
-        let decoded = base64::decode(base64_x509_cert).unwrap();
-        let (_, certificate) = x509_parser::parse_x509_certificate(decoded.as_slice()).unwrap();
+    ) -> Result<(), KeyParseError> {
+        let decoded = base64::decode(base64_x509_cert)?;
+        let (_, certificate) = x509_parser::parse_x509_certificate(decoded.as_slice())?;
         let raw_key_bytes = certificate.public_key().subject_public_key.data;
-        let key = VerifyingKey::new(raw_key_bytes);
-        dbg!(&key, raw_key_bytes.len());
-        self.keys.insert(kid, key.unwrap());
+        let key = VerifyingKey::new(raw_key_bytes)
+            .map_err(|e| KeyParseError::PublicKeyParseError(e.to_string()))?;
+        self.keys.insert(kid, key);
 
         Ok(())
     }
@@ -94,10 +88,10 @@ impl TrustList {
         kid: Vec<u8>,
         base64_der_public_key: &str,
     ) -> Result<(), KeyParseError> {
-        // TODO: propagate errors correctly and remove unwrap()
-        let der_data = base64::decode(base64_der_public_key).unwrap();
+        let der_data = base64::decode(base64_der_public_key)?;
         // The last 65 bytes of are the ones needed by VerifyingKey
-        let key = VerifyingKey::new(&der_data[der_data.len() - 65..]).unwrap();
+        let key = VerifyingKey::new(&der_data[der_data.len() - 65..])
+            .map_err(|e| KeyParseError::PublicKeyParseError(e.to_string()))?;
         self.keys.insert(kid, key);
 
         Ok(())
@@ -114,96 +108,63 @@ impl TryFrom<serde_json::Value> for TrustList {
     type Error = TrustListFromJsonError;
 
     fn try_from(data: serde_json::Value) -> Result<Self, Self::Error> {
+        use TrustListFromJsonError::*;
+
         let mut trustlist = TrustList::default();
 
-        if !data.is_object() {
-            return Err(TrustListFromJsonError::InvalidRootType);
-        }
-
-        let keys = data.as_object().unwrap();
+        let keys = data.as_object().ok_or(InvalidRootType)?;
 
         for (kid, keydef) in keys {
-            // makes sure keydef is an object
-            if !keydef.is_object() {
-                return Err(TrustListFromJsonError::KeyIsNotObject(kid.clone()));
-            }
-
-            // makes sure keydef contains "publicKeyAlgorithm"
-            let keydef = keydef.as_object().unwrap();
-            if !keydef.contains_key(&String::from("publicKeyAlgorithm")) {
-                return Err(TrustListFromJsonError::MissingPublicKeyAlgorithm(
-                    kid.clone(),
-                ));
-            }
+            let keydef = keydef
+                .as_object()
+                .ok_or_else(|| KeyIsNotObject(kid.clone()))?;
 
             // "publicKeyAlgorithm" must be an object that contains
             // "name" == "ECDSA" and "namedCurve" == "P-256"
-            let pub_key_alg = &keydef["publicKeyAlgorithm"];
-            if !pub_key_alg.is_object() {
-                return Err(TrustListFromJsonError::InvalidPublicKeyAlgorithm(
-                    kid.clone(),
-                ));
-            }
-            let pub_key_alg = pub_key_alg.as_object().unwrap();
+            let pub_key_alg = keydef
+                .get("publicKeyAlgorithm")
+                .ok_or_else(|| MissingPublicKeyAlgorithm(kid.clone()))?
+                .as_object()
+                .ok_or_else(|| InvalidPublicKeyAlgorithm(kid.clone()))?;
 
-            if !pub_key_alg.contains_key(&String::from("name")) {
-                return Err(TrustListFromJsonError::MissingPublicKeyAlgorithmName(
-                    kid.clone(),
-                ));
-            }
+            let pub_key_alg_name = pub_key_alg
+                .get("name")
+                .ok_or_else(|| MissingPublicKeyAlgorithmName(kid.clone()))?
+                .as_str()
+                .ok_or_else(|| InvalidPublicKeyAlgorithmName(kid.clone()))?;
 
-            let pub_key_alg_name = &pub_key_alg["name"];
-
-            if !pub_key_alg_name.is_string() {
-                return Err(TrustListFromJsonError::InvalidPublicKeyAlgorithmName(
-                    kid.clone(),
-                ));
-            }
-
-            let pub_key_alg_name = pub_key_alg_name.as_str().unwrap();
             if pub_key_alg_name != "ECDSA" {
-                return Err(TrustListFromJsonError::UnsupportedPublicKeyAlgorithmName(
+                return Err(UnsupportedPublicKeyAlgorithmName(
                     kid.clone(),
                     String::from(pub_key_alg_name),
                 ));
             }
 
-            if !pub_key_alg.contains_key(&String::from("namedCurve")) {
-                return Err(TrustListFromJsonError::MissingPublicKeyAlgorithmCurve(
-                    kid.clone(),
-                ));
-            }
+            let named_curve = pub_key_alg
+                .get("namedCurve")
+                .ok_or_else(|| MissingPublicKeyAlgorithmCurve(kid.clone()))?
+                .as_str()
+                .ok_or_else(|| InvalidPublicKeyAlgorithmCurve(kid.clone()))?;
 
-            let named_curve = &pub_key_alg["namedCurve"];
-            if !named_curve.is_string() {
-                return Err(TrustListFromJsonError::InvalidPublicKeyAlgorithmCurve(
-                    kid.clone(),
-                ));
-            }
-
-            let named_curve = named_curve.as_str().unwrap();
             if named_curve != "P-256" {
-                return Err(TrustListFromJsonError::UnsupportedPublicKeyAlgorithmCurve(
+                return Err(UnsupportedPublicKeyAlgorithmCurve(
                     kid.clone(),
                     String::from(named_curve),
                 ));
             }
 
             // "publicKeyPem" must exist and be a base64 encoded bynary string
-            if !keydef.contains_key(&String::from("publicKeyPem")) {
-                return Err(TrustListFromJsonError::MissingPublicKeyPem(kid.clone()));
-            }
+            let base64_der_public_key = keydef
+                .get("publicKeyPem")
+                .ok_or_else(|| MissingPublicKeyPem(kid.clone()))?
+                .as_str()
+                .ok_or_else(|| InvalidPublicKeyPem(kid.clone()))?;
 
-            let public_key_pem = &keydef["publicKeyPem"];
-            if !public_key_pem.is_string() {
-                return Err(TrustListFromJsonError::InvalidPublicKeyPem(kid.clone()));
-            }
-            let base64_der_public_key = public_key_pem.as_str().unwrap();
-            let kid = kid.clone().into_bytes();
-            // TODO: propagate error and remove unwrap()
+            let decoded_kid =
+                base64::decode(kid).map_err(|e| KidBase64DecodeError(kid.clone(), e))?;
             trustlist
-                .add_key_from_str(kid, base64_der_public_key)
-                .unwrap();
+                .add_key_from_str(decoded_kid, base64_der_public_key)
+                .map_err(|e| KeyParseError(kid.clone(), e))?;
         }
 
         Ok(trustlist)
@@ -277,7 +238,7 @@ mod tests {
 
         let trustlist: TrustList = data.try_into().unwrap();
         assert_eq!(trustlist.keys.len(), 2);
-        let first_key = trustlist.get_key(&"25QCxBrBJvA=".as_bytes().to_vec());
+        let first_key = trustlist.get_key(&base64::decode("25QCxBrBJvA=").unwrap());
         assert!(first_key.is_some());
     }
 }
