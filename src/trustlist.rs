@@ -20,7 +20,7 @@ pub struct TrustList {
 }
 
 impl TrustList {
-    pub fn get_key(&self, kid: &Vec<u8>) -> Option<&VerifyingKey> {
+    pub fn get_key(&self, kid: &[u8]) -> Option<&VerifyingKey> {
         self.keys.get(kid)
     }
 }
@@ -133,23 +133,16 @@ impl TrustList {
     pub fn add_key_from_certificate(
         &mut self,
         kid: Vec<u8>,
-        base64_cert: &str,
+        base64_x509_cert: &str,
     ) -> Result<(), KeyFromCertificateError> {
-        // TODO: extract the key instead of using hardcoded values
-        let raw_key_bytes: Vec<u8> = vec![
-            4, 183, 152, 112, 15, 71, 9, 80, 30, 83, 121, 2, 0, 104, 78, 231, 46, 55, 158, 127, 75,
-            213, 230, 102, 166, 71, 125, 36, 140, 74, 198, 57, 196, 94, 25, 237, 251, 116, 58, 230,
-            20, 7, 142, 168, 130, 218, 141, 4, 226, 5, 124, 220, 156, 246, 140, 197, 101, 29, 245,
-            34, 189, 101, 23, 177, 205,
-        ];
-        let key = VerifyingKey::new(raw_key_bytes.as_slice());
+        // TODO: propagate errors and remove unwrap
+        let decoded = base64::decode(base64_x509_cert).unwrap();
+        let (_, certificate) = x509_parser::parse_x509_certificate(decoded.as_slice()).unwrap();
+        let raw_key_bytes = certificate.public_key().subject_public_key.data;
+        let key = VerifyingKey::new(raw_key_bytes);
         dbg!(&key, raw_key_bytes.len());
         self.keys.insert(kid, key.unwrap());
-        // let certificate_der = base64::decode(base64_cert).unwrap();
-        // let parsed_cert = der_parser::parse_der(&certificate_der).unwrap();
-        // dbg!(parsed_cert.1);
 
-        // dbg!(parsed_cert);
         Ok(())
     }
 
@@ -282,10 +275,10 @@ mod tests {
 
     #[test]
     fn it_adds_a_public_key_from_a_certificate() {
-        let base64_cert = "MIIEHjCCAgagAwIBAgIUM5lJeGCHoRF1raR6cbZqDV4vPA8wDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCSVQxHzAdBgNVBAoMFk1pbmlzdGVybyBkZWxsYSBTYWx1dGUxHjAcBgNVBAMMFUl0YWx5IERHQyBDU0NBIFRFU1QgMTAeFw0yMTA1MDcxNzAyMTZaFw0yMzA1MDgxNzAyMTZaME0xCzAJBgNVBAYTAklUMR8wHQYDVQQKDBZNaW5pc3Rlcm8gZGVsbGEgU2FsdXRlMR0wGwYDVQQDDBRJdGFseSBER0MgRFNDIFRFU1QgMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aajgb8wgbwwHwYDVR0jBBgwFoAUS2iy4oMAoxUY87nZRidUqYg9yyMwagYDVR0fBGMwYTBfoF2gW4ZZbGRhcDovL2NhZHMuZGdjLmdvdi5pdC9DTj1JdGFseSUyMERHQyUyMENTQ0ElMjBURVNUJTIwMSxPPU1pbmlzdGVybyUyMGRlbGxhJTIwU2FsdXRlLEM9SVQwHQYDVR0OBBYEFNSEwjzu61pAMqliNhS9vzGJFqFFMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAgEAIF74yHgzCGdor5MaqYSvkS5aog5+7u52TGggiPl78QAmIpjPO5qcYpJZVf6AoL4MpveEI/iuCUVQxBzYqlLACjSbZEbtTBPSzuhfvsf9T3MUq5cu10lkHKbFgApUDjrMUnG9SMqmQU2Cv5S4t94ec2iLmokXmhYP/JojRXt1ZMZlsw/8/lRJ8vqPUorJ/fMvOLWDE/fDxNhh3uK5UHBhRXCT8MBep4cgt9cuT9O4w1JcejSr5nsEfeo8u9Pb/h6MnmxpBSq3JbnjONVK5ak7iwCkLr5PMk09ncqG+/8Kq+qTjNC76IetS9ST6bWzTZILX4BD1BL8bHsFGgIeeCO0GqalFZAsbapnaB+36HVUZVDYOoA+VraIWECNxXViikZdjQONaeWDVhCxZ/vBl1/KLAdX3OPxRwl/jHLnaSXeqr/zYf9a8UqFrpadT0tQff/q3yH5hJRJM0P6Yp5CPIEArJRW6ovDBbp3DVF2GyAI1lFA2Trs798NN6qf7SkuySz5HSzm53g6JsLY/HLzdwJPYLObD7U+x37n+DDi4Wa6vM5xdC7FZ5IyWXuT1oAa9yM4h6nW3UvC+wNUusW6adqqtdd4F1gHPjCf5lpW5Ye1bdLUmO7TGlePmbOkzEB08Mlc6atl/vkx/crfl4dq1LZivLgPBwDzE8arIk0f2vCx1+4=";
+        let base64_x509_cert = "MIIEHjCCAgagAwIBAgIUM5lJeGCHoRF1raR6cbZqDV4vPA8wDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCSVQxHzAdBgNVBAoMFk1pbmlzdGVybyBkZWxsYSBTYWx1dGUxHjAcBgNVBAMMFUl0YWx5IERHQyBDU0NBIFRFU1QgMTAeFw0yMTA1MDcxNzAyMTZaFw0yMzA1MDgxNzAyMTZaME0xCzAJBgNVBAYTAklUMR8wHQYDVQQKDBZNaW5pc3Rlcm8gZGVsbGEgU2FsdXRlMR0wGwYDVQQDDBRJdGFseSBER0MgRFNDIFRFU1QgMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aajgb8wgbwwHwYDVR0jBBgwFoAUS2iy4oMAoxUY87nZRidUqYg9yyMwagYDVR0fBGMwYTBfoF2gW4ZZbGRhcDovL2NhZHMuZGdjLmdvdi5pdC9DTj1JdGFseSUyMERHQyUyMENTQ0ElMjBURVNUJTIwMSxPPU1pbmlzdGVybyUyMGRlbGxhJTIwU2FsdXRlLEM9SVQwHQYDVR0OBBYEFNSEwjzu61pAMqliNhS9vzGJFqFFMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAgEAIF74yHgzCGdor5MaqYSvkS5aog5+7u52TGggiPl78QAmIpjPO5qcYpJZVf6AoL4MpveEI/iuCUVQxBzYqlLACjSbZEbtTBPSzuhfvsf9T3MUq5cu10lkHKbFgApUDjrMUnG9SMqmQU2Cv5S4t94ec2iLmokXmhYP/JojRXt1ZMZlsw/8/lRJ8vqPUorJ/fMvOLWDE/fDxNhh3uK5UHBhRXCT8MBep4cgt9cuT9O4w1JcejSr5nsEfeo8u9Pb/h6MnmxpBSq3JbnjONVK5ak7iwCkLr5PMk09ncqG+/8Kq+qTjNC76IetS9ST6bWzTZILX4BD1BL8bHsFGgIeeCO0GqalFZAsbapnaB+36HVUZVDYOoA+VraIWECNxXViikZdjQONaeWDVhCxZ/vBl1/KLAdX3OPxRwl/jHLnaSXeqr/zYf9a8UqFrpadT0tQff/q3yH5hJRJM0P6Yp5CPIEArJRW6ovDBbp3DVF2GyAI1lFA2Trs798NN6qf7SkuySz5HSzm53g6JsLY/HLzdwJPYLObD7U+x37n+DDi4Wa6vM5xdC7FZ5IyWXuT1oAa9yM4h6nW3UvC+wNUusW6adqqtdd4F1gHPjCf5lpW5Ye1bdLUmO7TGlePmbOkzEB08Mlc6atl/vkx/crfl4dq1LZivLgPBwDzE8arIk0f2vCx1+4=";
         let mut trustlist = TrustList::new();
         assert!(trustlist
-            .add_key_from_certificate(vec![1, 2, 3], base64_cert)
+            .add_key_from_certificate(vec![1, 2, 3], base64_x509_cert)
             .is_ok());
     }
 
@@ -297,7 +290,7 @@ mod tests {
             .add_key_from_str(vec![1, 2, 3], base64_der_public_key)
             .unwrap();
         assert_eq!(trustlist.keys.len(), 1);
-        assert!(trustlist.get_key(&vec![1, 2, 3]).is_some())
+        assert!(trustlist.get_key(&[1, 2, 3]).is_some())
     }
 
     #[test]

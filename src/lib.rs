@@ -1,9 +1,13 @@
+#[macro_use]
+extern crate lazy_static;
+
 use std::convert::TryInto;
 
 use error::Error;
 use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
 use trustlist::TrustList;
 pub mod cwt;
+pub mod dgc;
 pub mod error;
 pub mod trustlist;
 use cwt::*;
@@ -217,9 +221,7 @@ mod tests {
         let key_data = "A0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aY=";
 
         let mut trustlist = TrustList::new();
-        trustlist
-            .add_key_from_str(kid, key_data)
-            .expect("Cannot add key");
+        trustlist.add_key_from_str(kid, key_data).unwrap();
 
         let cert = validate(data, &trustlist).unwrap();
         assert!(matches!(cert.validity, CertValidity::Valid));
