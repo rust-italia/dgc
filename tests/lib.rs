@@ -1,3 +1,4 @@
+#[cfg(test)]
 use green_pass::*;
 // Tests the library against some of the test data available at https://github.com/eu-digital-green-certificates/dgc-testdata
 use rstest::rstest;

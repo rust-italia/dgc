@@ -28,6 +28,10 @@ pub enum CwtParseError {
     InvalidPartsCount(usize),
     #[error("The header section is not a binary string")]
     HeaderNotBinary,
+    #[error("The header section is not valid CBOR-encoded data")]
+    HeaderNotValidCbor,
+    #[error("The header section does not contain key-value pairs")]
+    HeaderNotMap,
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
     #[error("The signature section is not a binary string")]
@@ -76,23 +80,24 @@ impl CwtHeader {
     }
 }
 
-impl From<&[u8]> for CwtHeader {
-    fn from(data: &[u8]) -> Self {
+impl From<&[(Value, Value)]> for CwtHeader {
+    fn from(data: &[(Value, Value)]) -> Self {
         // permissive parsing. We don't want to fail if we can't decode the header
         let mut header = CwtHeader::new();
-        // TODO: remove unwrap to avoid failure
-        let header_protected: Value = ciborium::de::from_reader(data).unwrap();
-        let header_as_map = header_protected.as_map().unwrap();
-        for (key, val) in header_as_map.iter() {
+        // tries to find kid and alg and apply them to the header before returning it
+        for (key, val) in data.iter() {
             if let Value::Integer(k) = key {
                 if *k.value() == COSE_HEADER_KEY_KID {
                     // found kid
-                    let kid = val.as_bytes().unwrap();
-                    header.kid(kid.clone());
+                    if let Some(kid) = val.as_bytes() {
+                        header.kid(kid.clone());
+                    }
                 } else if *k.value() == COSE_HEADER_KEY_ALG {
                     // found alg
-                    let alg: EcAlg = (*val.as_integer().unwrap()).into();
-                    header.alg(alg);
+                    if let Some(raw_alg) = val.as_integer() {
+                        let alg: EcAlg = (*raw_alg).into();
+                        header.alg(alg);
+                    }
                 }
             }
         }
@@ -144,24 +149,29 @@ impl TryFrom<&[u8]> for Cwt {
     type Error = CwtParseError;
 
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
+        use CwtParseError::*;
+
         let cwt: Value = ciborium::de::from_reader(data)?;
-        let (tag_id, cwt_content) = cwt.as_tag().ok_or(CwtParseError::InvalidRootValue)?;
+        let (tag_id, cwt_content) = cwt.as_tag().ok_or(InvalidRootValue)?;
         if *tag_id != COSE_SIGN1_CBOR_TAG {
-            return Err(CwtParseError::InvalidTag(*tag_id));
+            return Err(InvalidTag(*tag_id));
         }
-        let parts = cwt_content.as_array().ok_or(CwtParseError::InvalidParts)?;
+        let parts = cwt_content.as_array().ok_or(InvalidParts)?;
         if parts.len() != 4 {
-            return Err(CwtParseError::InvalidPartsCount(parts.len()));
+            return Err(InvalidPartsCount(parts.len()));
         }
-        let header_protected_raw =
-            (parts[0].as_bytes().ok_or(CwtParseError::HeaderNotBinary)?).clone();
-        let header_protected: CwtHeader = header_protected_raw.as_slice().into();
+        let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
+        let header_protected: CwtHeader =
+            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
+                .map_err(|_| HeaderNotValidCbor)?
+                .as_map()
+                .ok_or(HeaderNotMap)?
+                .as_slice()
+                .into();
         let header_unprotected = parts[1].clone();
-        let payload_raw = (parts[2].as_bytes().ok_or(CwtParseError::PayloadNotBinary)?).clone();
-        let signature = (parts[3]
-            .as_bytes()
-            .ok_or(CwtParseError::SignatureNotBinary)?)
-        .clone();
+        let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
+        let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
+
         Ok(Cwt::new(
             header_protected_raw,
             header_protected,
