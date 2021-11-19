@@ -1,48 +1,16 @@
 // https://github.com/ehn-dcc-development/ehn-dcc-schema
 
-use serde::{Deserialize, Serialize};
-
-pub mod recovery;
-pub mod test;
-pub mod vaccination;
-pub mod valuesets;
-use recovery::Recovery;
-use test::Test;
-use vaccination::Vaccination;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DgcCertName {
-    pub gn: String,
-    pub r#fn: String,
-    pub gnt: String,
-    pub fnt: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DgcCert {
-    pub ver: String,
-    pub nam: DgcCertName,
-    pub dob: String,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub t: Vec<Test>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub v: Vec<Vaccination>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub r: Vec<Recovery>,
-}
-
-impl DgcCert {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.t = self.t.iter().map(|t| t.expand_values()).collect();
-        expanded.v = self.v.iter().map(|v| v.expand_values()).collect();
-        expanded.r = self.r.iter().map(|r| r.expand_values()).collect();
-        expanded
-    }
-}
+mod dgc_cert;
+mod dgc_container;
+mod recovery;
+mod test;
+mod vaccination;
+mod valuesets;
+pub use dgc_cert::*;
+pub use dgc_container::*;
+pub use recovery::*;
+pub use test::*;
+pub use vaccination::*;
 
 #[cfg(test)]
 mod tests {

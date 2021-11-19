@@ -7,6 +7,8 @@ use ciborium::{
     value::{Integer, Value},
 };
 
+use crate::dgc::DgcCertContainer;
+
 const COSE_SIGN1_CBOR_TAG: u64 = 18;
 const COSE_HEADER_KEY_KID: i128 = 4;
 const COSE_HEADER_KEY_ALG: i128 = 1;
@@ -34,6 +36,8 @@ pub enum CwtParseError {
     HeaderNotMap,
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
+    #[error("Cannot deserialize payload: {0}")]
+    InvalidPayload(#[source] ciborium::de::Error<std::io::Error>),
     #[error("The signature section is not a binary string")]
     SignatureNotBinary,
 }
@@ -111,6 +115,7 @@ pub struct Cwt {
     pub header_protected: CwtHeader,
     pub header_unprotected: Value,
     pub payload_raw: Vec<u8>,
+    pub payload: DgcCertContainer,
     pub signature: Vec<u8>,
 }
 
@@ -120,6 +125,7 @@ impl Cwt {
         header_protected: CwtHeader,
         header_unprotected: Value,
         payload_raw: Vec<u8>,
+        payload: DgcCertContainer,
         signature: Vec<u8>,
     ) -> Self {
         Cwt {
@@ -127,6 +133,7 @@ impl Cwt {
             header_protected,
             header_unprotected,
             payload_raw,
+            payload,
             signature,
         }
     }
@@ -172,11 +179,20 @@ impl TryFrom<&[u8]> for Cwt {
         let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
+        // TODO: remove this debugging struct
+        let payload: Value =
+            ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
+        dbg!(&payload);
+
+        let payload: DgcCertContainer =
+            ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
+
         Ok(Cwt::new(
             header_protected_raw,
             header_protected,
             header_unprotected,
             payload_raw,
+            payload,
             signature,
         ))
     }
