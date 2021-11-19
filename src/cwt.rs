@@ -179,11 +179,6 @@ impl TryFrom<&[u8]> for Cwt {
         let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
-        // TODO: remove this debugging struct
-        let payload: Value =
-            ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
-        dbg!(&payload);
-
         let payload: DgcCertContainer =
             ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
