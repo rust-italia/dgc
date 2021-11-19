@@ -70,7 +70,7 @@ impl TrustList {
 
     pub fn add_key_from_certificate(
         &mut self,
-        kid: Vec<u8>,
+        kid: &[u8],
         base64_x509_cert: &str,
     ) -> Result<(), KeyParseError> {
         let decoded = base64::decode(base64_x509_cert)?;
@@ -78,21 +78,21 @@ impl TrustList {
         let raw_key_bytes = certificate.public_key().subject_public_key.data;
         let key = VerifyingKey::new(raw_key_bytes)
             .map_err(|e| KeyParseError::PublicKeyParseError(e.to_string()))?;
-        self.keys.insert(kid, key);
+        self.keys.insert(kid.to_vec(), key);
 
         Ok(())
     }
 
     pub fn add_key_from_str(
         &mut self,
-        kid: Vec<u8>,
+        kid: &[u8],
         base64_der_public_key: &str,
     ) -> Result<(), KeyParseError> {
         let der_data = base64::decode(base64_der_public_key)?;
         // The last 65 bytes of are the ones needed by VerifyingKey
         let key = VerifyingKey::new(&der_data[der_data.len() - 65..])
             .map_err(|e| KeyParseError::PublicKeyParseError(e.to_string()))?;
-        self.keys.insert(kid, key);
+        self.keys.insert(kid.to_vec(), key);
 
         Ok(())
     }
@@ -163,7 +163,7 @@ impl TryFrom<serde_json::Value> for TrustList {
             let decoded_kid =
                 base64::decode(kid).map_err(|e| KidBase64DecodeError(kid.clone(), e))?;
             trustlist
-                .add_key_from_str(decoded_kid, base64_der_public_key)
+                .add_key_from_str(decoded_kid.as_slice(), base64_der_public_key)
                 .map_err(|e| KeyParseError(kid.clone(), e))?;
         }
 
@@ -182,7 +182,7 @@ mod tests {
         let base64_x509_cert = "MIIEHjCCAgagAwIBAgIUM5lJeGCHoRF1raR6cbZqDV4vPA8wDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCSVQxHzAdBgNVBAoMFk1pbmlzdGVybyBkZWxsYSBTYWx1dGUxHjAcBgNVBAMMFUl0YWx5IERHQyBDU0NBIFRFU1QgMTAeFw0yMTA1MDcxNzAyMTZaFw0yMzA1MDgxNzAyMTZaME0xCzAJBgNVBAYTAklUMR8wHQYDVQQKDBZNaW5pc3Rlcm8gZGVsbGEgU2FsdXRlMR0wGwYDVQQDDBRJdGFseSBER0MgRFNDIFRFU1QgMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aajgb8wgbwwHwYDVR0jBBgwFoAUS2iy4oMAoxUY87nZRidUqYg9yyMwagYDVR0fBGMwYTBfoF2gW4ZZbGRhcDovL2NhZHMuZGdjLmdvdi5pdC9DTj1JdGFseSUyMERHQyUyMENTQ0ElMjBURVNUJTIwMSxPPU1pbmlzdGVybyUyMGRlbGxhJTIwU2FsdXRlLEM9SVQwHQYDVR0OBBYEFNSEwjzu61pAMqliNhS9vzGJFqFFMA4GA1UdDwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAgEAIF74yHgzCGdor5MaqYSvkS5aog5+7u52TGggiPl78QAmIpjPO5qcYpJZVf6AoL4MpveEI/iuCUVQxBzYqlLACjSbZEbtTBPSzuhfvsf9T3MUq5cu10lkHKbFgApUDjrMUnG9SMqmQU2Cv5S4t94ec2iLmokXmhYP/JojRXt1ZMZlsw/8/lRJ8vqPUorJ/fMvOLWDE/fDxNhh3uK5UHBhRXCT8MBep4cgt9cuT9O4w1JcejSr5nsEfeo8u9Pb/h6MnmxpBSq3JbnjONVK5ak7iwCkLr5PMk09ncqG+/8Kq+qTjNC76IetS9ST6bWzTZILX4BD1BL8bHsFGgIeeCO0GqalFZAsbapnaB+36HVUZVDYOoA+VraIWECNxXViikZdjQONaeWDVhCxZ/vBl1/KLAdX3OPxRwl/jHLnaSXeqr/zYf9a8UqFrpadT0tQff/q3yH5hJRJM0P6Yp5CPIEArJRW6ovDBbp3DVF2GyAI1lFA2Trs798NN6qf7SkuySz5HSzm53g6JsLY/HLzdwJPYLObD7U+x37n+DDi4Wa6vM5xdC7FZ5IyWXuT1oAa9yM4h6nW3UvC+wNUusW6adqqtdd4F1gHPjCf5lpW5Ye1bdLUmO7TGlePmbOkzEB08Mlc6atl/vkx/crfl4dq1LZivLgPBwDzE8arIk0f2vCx1+4=";
         let mut trustlist = TrustList::new();
         assert!(trustlist
-            .add_key_from_certificate(vec![1, 2, 3], base64_x509_cert)
+            .add_key_from_certificate(&vec![1, 2, 3], base64_x509_cert)
             .is_ok());
     }
 
@@ -191,7 +191,7 @@ mod tests {
         let base64_der_public_key = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEt5hwD0cJUB5TeQIAaE7nLjeef0vV5mamR30kjErGOcReGe37dDrmFAeOqILajQTiBXzcnPaMxWUd9SK9ZRexzQ==";
         let mut trustlist = TrustList::new();
         trustlist
-            .add_key_from_str(vec![1, 2, 3], base64_der_public_key)
+            .add_key_from_str(&vec![1, 2, 3], base64_der_public_key)
             .unwrap();
         assert_eq!(trustlist.keys.len(), 1);
         assert!(trustlist.get_key(&[1, 2, 3]).is_some())

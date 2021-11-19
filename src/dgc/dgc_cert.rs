@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{Recovery, Test, Vaccination};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCertName {
     pub gn: String,
     pub r#fn: String,
@@ -10,7 +10,7 @@ pub struct DgcCertName {
     pub fnt: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCert {
     pub ver: String,
     pub nam: DgcCertName,

@@ -5,7 +5,7 @@ use super::valuesets::expand_value;
 /// Recovery Entry
 /// https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/DCC.Types.schema.json
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Recovery {
     /// Disease agent targeted
     /// https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted

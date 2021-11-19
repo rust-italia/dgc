@@ -4,6 +4,7 @@ extern crate lazy_static;
 use std::convert::TryInto;
 
 use cwt::*;
+use dgc::DgcCertContainer;
 use error::ParseError;
 use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
 use trustlist::TrustList;
@@ -17,22 +18,14 @@ pub enum SignatureValidity {
     Valid,
     Invalid,
     MissingKid,
+    MissingSigningAlgorithm,
+    UnsupportedSigningAlgorithm(String),
     KeyNotInTrustList(Vec<u8>),
 }
 
-#[derive(Debug)]
-pub struct Cert {
-    data: serde_json::Value,
-    validity: SignatureValidity,
-}
-
-impl Cert {
-    pub fn new(data: serde_json::Value, validity: SignatureValidity) -> Self {
-        Cert { data, validity }
-    }
-
+impl SignatureValidity {
     pub fn is_valid(&self) -> bool {
-        matches!(self.validity, SignatureValidity::Valid)
+        matches!(self, SignatureValidity::Valid)
     }
 }
 
@@ -65,18 +58,59 @@ fn parse_cwt_payload(data: Vec<u8>) -> Result<Cwt, ParseError> {
     Ok(cwt)
 }
 
-fn cbor_to_json(data: &[u8]) -> Result<String, ParseError> {
-    let mut output: Vec<u8> = vec![];
-    // TODO: get rid of serde_cbor (and possibly of JSON entirely)
-    let mut deserializer = serde_cbor::Deserializer::from_slice(data);
-    let mut serializer = serde_json::Serializer::new(&mut output);
+pub fn validate(
+    data: &str,
+    trustlist: &TrustList,
+) -> Result<(DgcCertContainer, SignatureValidity), ParseError> {
+    // remove prefix
+    let data = remove_prefix(data)?;
 
-    serde_transcode::transcode(&mut deserializer, &mut serializer)?;
+    // base45 decode
+    let decoded = decode_base45(data)?;
 
-    Ok(String::from_utf8(output).unwrap())
+    // decompress the data
+    let decompressed = decompress(decoded)?;
+
+    let cwt = parse_cwt_payload(decompressed)?;
+
+    if cwt.header_protected.kid.is_none() {
+        return Ok((cwt.payload, SignatureValidity::MissingKid));
+    }
+    let kid = cwt.header_protected.kid.clone().unwrap();
+
+    if cwt.header_protected.alg.is_none() {
+        return Ok((cwt.payload, SignatureValidity::MissingSigningAlgorithm));
+    }
+    if !matches!(cwt.header_protected.alg, Some(EcAlg::Ecdsa256)) {
+        return Ok((
+            cwt.payload,
+            SignatureValidity::UnsupportedSigningAlgorithm(format!(
+                "{:?}",
+                cwt.header_protected.alg.unwrap()
+            )),
+        ));
+    }
+
+    let key = trustlist.get_key(&kid);
+    if key.is_none() {
+        return Ok((
+            cwt.payload,
+            SignatureValidity::KeyNotInTrustList(kid.clone()),
+        ));
+    }
+    let key = key.unwrap();
+    let signature: Signature = cwt.signature.as_slice().try_into().unwrap();
+    if key
+        .verify(cwt.make_sig_structure().as_slice(), &signature)
+        .is_err()
+    {
+        return Ok((cwt.payload, SignatureValidity::Invalid));
+    }
+
+    Ok((cwt.payload, SignatureValidity::Valid))
 }
 
-pub fn decode_to_json_string(data: &str) -> Result<String, ParseError> {
+pub fn decode_cwt(data: &str) -> Result<Cwt, ParseError> {
     // remove prefix
     let data = remove_prefix(data)?;
 
@@ -89,13 +123,10 @@ pub fn decode_to_json_string(data: &str) -> Result<String, ParseError> {
     // parse cose payload
     let cwt = parse_cwt_payload(decompressed)?;
 
-    // converts CBOR data to JSON
-    let json_str = cbor_to_json(&cwt.payload_raw)?;
-
-    Ok(json_str)
+    Ok(cwt)
 }
 
-pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
+pub fn decode(data: &str) -> Result<DgcCertContainer, ParseError> {
     // remove prefix
     let data = remove_prefix(data)?;
 
@@ -105,42 +136,10 @@ pub fn validate(data: &str, trustlist: &TrustList) -> Result<Cert, ParseError> {
     // decompress the data
     let decompressed = decompress(decoded)?;
 
+    // parse cose payload
     let cwt = parse_cwt_payload(decompressed)?;
-    let json_data = cbor_to_json(&cwt.payload_raw)?;
-    let data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
 
-    if cwt.header_protected.kid.is_none() {
-        return Ok(Cert::new(data, SignatureValidity::MissingKid));
-    }
-    let kid = cwt.header_protected.kid.clone().unwrap();
-
-    // TODO: validate alg in header as well
-
-    let key = trustlist.get_key(&kid);
-    if key.is_none() {
-        return Ok(Cert::new(
-            data,
-            SignatureValidity::KeyNotInTrustList(kid.clone()),
-        ));
-    }
-    let key = key.unwrap();
-    let signature: Signature = cwt.signature.as_slice().try_into().unwrap();
-    if key
-        .verify(cwt.make_sig_structure().as_slice(), &signature)
-        .is_err()
-    {
-        return Ok(Cert::new(data, SignatureValidity::Invalid));
-    }
-
-    Ok(Cert::new(data, SignatureValidity::Valid))
-
-    // TODO: validate timestamps for certificate
-}
-
-pub fn decode(data: &str) -> Result<serde_json::Value, ParseError> {
-    let json_data = decode_to_json_string(data)?;
-    let data: serde_json::Value = serde_json::from_str(json_data.as_str()).unwrap();
-    Ok(data)
+    Ok(cwt.payload)
 }
 
 #[cfg(test)]
@@ -185,30 +184,12 @@ mod tests {
     }
 
     #[test]
-    fn it_converts_cbor_to_json() {
-        let data = hex::decode("a4041a60d9b00c061a60d70d0c01624154390103a101a4617681aa62646e01626d616d4f52472d3130303033303231356276706a313131393334393030376264746a323032312d30322d313862636f624154626369783155524e3a555643493a30313a41543a31303830373834334639344145453045453530393346424332353442443831332342626d706c45552f312f32302f31353238626973781b4d696e6973747279206f66204865616c74682c20417573747269616273640262746769383430353339303036636e616da463666e74754d5553544552465241553c474f455353494e47455262666e754d7573746572667261752d47c3b6c39f696e67657263676e74684741425249454c4562676e684761627269656c656376657265312e322e3163646f626a313939382d30322d3236").unwrap();
-        let json_str = cbor_to_json(&data).unwrap();
-
-        let expected = "{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}";
-        assert_eq!(expected, json_str);
-    }
-
-    #[test]
-    fn it_decodes_to_json_string() {
-        let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
-        let json_str = decode_to_json_string(data).unwrap();
-
-        let expected = "{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}";
-        assert_eq!(expected, json_str);
-    }
-
-    #[test]
     fn it_decodes() {
         let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
-        let json_str = decode(data).unwrap();
+        let dgc_cert_container = decode(data).unwrap();
 
-        let expected: serde_json::Value = serde_json::from_str("{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}").unwrap();
-        assert_eq!(expected, json_str);
+        let expected: DgcCertContainer = serde_json::from_str("{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}").unwrap();
+        assert_eq!(expected, dgc_cert_container);
     }
 
     #[test]
@@ -218,9 +199,11 @@ mod tests {
         let key_data = "A0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aY=";
 
         let mut trustlist = TrustList::new();
-        trustlist.add_key_from_str(kid, key_data).unwrap();
+        trustlist
+            .add_key_from_str(kid.as_slice(), key_data)
+            .unwrap();
 
-        let cert = validate(data, &trustlist).unwrap();
-        assert!(matches!(cert.validity, SignatureValidity::Valid));
+        let (_, signature_validity) = validate(data, &trustlist).unwrap();
+        assert!(matches!(signature_validity, SignatureValidity::Valid));
     }
 }

@@ -12,7 +12,7 @@ const ISSUED_AT: i64 = 6;
 const EXPIRATION_TIME: i64 = 4;
 const CERTS: i64 = -260;
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct DgcCertContainer {
     #[serde(alias = "1")]
     #[serde(rename(serialize = "1"))]
@@ -53,8 +53,6 @@ impl<'de> Visitor<'de> for DgcCertContainerVisitor {
     where
         V: MapAccess<'de>,
     {
-        dbg!("visit_map DgcCertContainerVisitor");
-
         let mut issuer = None;
         let mut issued_at = None;
         let mut expiration_time = None;

@@ -14,6 +14,4 @@ pub enum ParseError {
     Deflate(String),
     #[error("Could not decode CWT data: {0}")]
     CwtDecode(#[from] CwtParseError),
-    #[error("Could not convert CBOR data to JSON: {0}")]
-    Transcode(#[from] serde_json::error::Error),
 }
