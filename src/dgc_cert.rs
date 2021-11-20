@@ -3,9 +3,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCertName {
-    pub gn: String,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gn: Option<String>,
     pub r#fn: String,
-    pub gnt: String,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gnt: Option<String>,
     pub fnt: String,
 }
 
@@ -45,9 +49,9 @@ mod tests {
         let cert = DgcCert {
             ver: String::from("1.3.0"),
             nam: DgcCertName {
-                gn: String::from("ALSTON"),
+                gn: Some(String::from("ALSTON")),
                 r#fn: String::from("BLAKE"),
-                gnt: String::from("ALSTON"),
+                gnt: Some(String::from("ALSTON")),
                 fnt: String::from("BLAKE"),
             },
             dob: String::from("1990-01-01"),
@@ -105,8 +109,8 @@ mod tests {
         assert_eq!(cert.ver, String::from("1.0.0"));
         assert_eq!(cert.nam.r#fn, String::from("Di Caprio"));
         assert_eq!(cert.nam.fnt, String::from("DI<CAPRIO"));
-        assert_eq!(cert.nam.gn, String::from("Marilù Teresa"));
-        assert_eq!(cert.nam.gnt, String::from("MARILU<TERESA"));
+        assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
+        assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));
         assert_eq!(cert.dob, String::from("1977-06-16"));
         assert_eq!(cert.t[0].tg, String::from("840539006"));
         assert_eq!(cert.t[0].tt, String::from("LP6464-4"));
@@ -157,8 +161,8 @@ mod tests {
         assert_eq!(cert.ver, String::from("1.0.0"));
         assert_eq!(cert.nam.r#fn, String::from("Di Caprio"));
         assert_eq!(cert.nam.fnt, String::from("DI<CAPRIO"));
-        assert_eq!(cert.nam.gn, String::from("Marilù Teresa"));
-        assert_eq!(cert.nam.gnt, String::from("MARILU<TERESA"));
+        assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
+        assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));
         assert_eq!(cert.dob, String::from("1977-06-16"));
         assert_eq!(cert.t[0].tg, String::from("COVID-19"));
         assert_eq!(
