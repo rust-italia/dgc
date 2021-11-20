@@ -1,6 +1,5 @@
+use crate::{Recovery, Test, Vaccination};
 use serde::{Deserialize, Serialize};
-
-use super::{Recovery, Test, Vaccination};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCertName {

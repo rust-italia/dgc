@@ -370,7 +370,7 @@ lazy_static! {
     };
 }
 
-pub fn expand_value(value_id: &str) -> String {
+pub fn lookup_value(value_id: &str) -> String {
     VALUESET
         .get(value_id)
         .map_or(value_id.to_string(), |s| String::from(*s))

@@ -1,13 +1,10 @@
-use thiserror::Error;
-
-use std::convert::{TryFrom, TryInto};
-
+use crate::DgcCertContainer;
 use ciborium::{
     ser::into_writer,
     value::{Integer, Value},
 };
-
-use crate::dgc::DgcCertContainer;
+use std::convert::{TryFrom, TryInto};
+use thiserror::Error;
 
 const COSE_SIGN1_CBOR_TAG: u64 = 18;
 const COSE_HEADER_KEY_KID: i128 = 4;

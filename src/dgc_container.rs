@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-
+use crate::DgcCert;
 use serde::{
     de::{MapAccess, Visitor},
     Deserialize, Serialize,
 };
-
-use super::DgcCert;
+use std::collections::HashMap;
 
 const ISSUER: i64 = 1;
 const ISSUED_AT: i64 = 6;
