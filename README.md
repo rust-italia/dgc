@@ -7,16 +7,22 @@
 [![crates.io badge](https://img.shields.io/crates/v/dgc.svg)](https://crates.io/crates/dgc)
 [![Documentation](https://docs.rs/dgc/badge.svg)](https://docs.rs/dgc)
 
-A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass
+A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass 📲✅
 
-  - **Parse** the content of a European Digital Green Certificate (dgc or greenpass) and extract the embedded data
-  - Use a **Trustlist** of **public keys** and **Elliptic Curve** cryptography to be able to validate the signature of a given certificate
+  - **Parses** the text content of a European Digital Green Certificate (dgc or greenpass) and extract the embedded data
+  - Uses a **Trustlist** of **public keys** and **Elliptic Curve** cryptography to be able to validate the signature of a given certificate
   - It offers a **minimal and easy to use API**
-  - Certificate data can be easily serialized/deserialized for ease of testing and reporting
+  - The certificate data can be easily serialized/deserialized for ease of testing and reporting
   - It embeds the [official **valueset**](https://github.com/ehn-dcc-development/ehn-dcc-schema/) so that internal IDs (diseases, result types, countries, testing authorities, etc.) can be easily expanded to their descriptive equivalents
   - It reports errors for all fallible operations minimising the opportunity for panicking
   - Offers utilities for easily populate a Trustlist from various types of keys and apis
   - It's tested against the [official testing dataset](https://github.com/eu-digital-green-certificates/dgc-testdata)
+
+
+Current limitations:
+
+  - It only supports EC signatures (see [#2](https://github.com/lmammino/dgc/issues/2))
+  - It does not support KID in the COSE unprotected header (see [#1](https://github.com/lmammino/dgc/issues/1))
 
 
 ## Dgc in action

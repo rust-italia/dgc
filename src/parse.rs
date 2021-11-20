@@ -23,6 +23,7 @@ pub enum SignatureValidity {
     Invalid,
     MissingKid,
     MissingSigningAlgorithm,
+    SignatureMalformed,
     UnsupportedSigningAlgorithm(String),
     KeyNotInTrustList(Vec<u8>),
 }
@@ -103,7 +104,12 @@ pub fn validate(
         ));
     }
     let key = key.unwrap();
-    let signature: Signature = cwt.signature.as_slice().try_into().unwrap();
+    let signature: Result<Signature, _> = cwt.signature.as_slice().try_into();
+    if signature.is_err() {
+        return Ok((cwt.payload, SignatureValidity::SignatureMalformed));
+    }
+
+    let signature = signature.unwrap();
     if key
         .verify(cwt.make_sig_structure().as_slice(), &signature)
         .is_err()
