@@ -1,7 +1,14 @@
 [package]
-name = "green-pass"
-version = "0.1.0"
+name = "dgc"
+version = "0.0.1"
+authors = ["Luciano Mammino"]
 edition = "2018"
+description = "A parse and validator for the Digital Green Certificate (dgc) aka greenpass"
+keywords = ["dgc", "greenpass", "digital green certificate", "cose", "health"]
+categories = ["encoding", "data-structures", "cryptography"]
+repository = "https://github.com/lmammino/dgc"
+readme = "README.md"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

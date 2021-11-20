@@ -1,0 +1,18 @@
+name: Release
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: "ubuntu-20.04"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: cargo test --verbose
+      - name: Release on Crates.io
+        run: |
+          cargo login ${{ secrets.CARGO_TOKEN }}
+          cargo publish

@@ -1,7 +1,6 @@
-use green_pass::DgcCert;
 #[cfg(test)]
-use green_pass::*;
-// Tests the library against some of the test data available at https://github.com/eu-digital-green-certificates/dgc-testdata
+use dgc::*;
+// Tests the library against some of the test data available at <https://github.com/eu-digital-green-certificates/dgc-testdata>
 use rstest::rstest;
 use serde_json::Value;
 use std::fs;
@@ -15,8 +14,6 @@ use std::path::PathBuf;
 #[case::it_3_json("IT_3.json")]
 #[case::it_4_json("IT_4.json")]
 fn test_case(#[case] test_file: &str) {
-    use green_pass::trustlist::TrustList;
-
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("tests");
     path.push("data");
