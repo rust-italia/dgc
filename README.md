@@ -7,9 +7,21 @@
 [![crates.io badge](https://img.shields.io/crates/v/dgc.svg)](https://crates.io/crates/dgc)
 [![Documentation](https://docs.rs/dgc/badge.svg)](https://docs.rs/dgc)
 
-A parser and validator for the Digital Green Certificate (dgc) a.k.a. greenpass
+A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass
 
 
-## docs
+## Docs
 
-...
+coming soon 🤞
+
+
+## Contributing
+
+Everyone is very welcome to contribute to this project.
+You can contribute just by submitting bugs or suggesting improvements by
+[opening an issue on GitHub](https://github.com/lmammino/dgc/issues).
+
+
+## License
+
+Licensed under [MIT License](LICENSE). © Luciano Mammino.
