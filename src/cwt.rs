@@ -1,5 +1,5 @@
 use crate::DgcCertContainer;
-use ciborium::{
+use ciboriumvalue::{
     ser::into_writer,
     value::{Integer, Value},
 };
@@ -16,7 +16,7 @@ const COSE_ECDSA512: i128 = -36;
 #[derive(Error, Debug)]
 pub enum CwtParseError {
     #[error("Cannot parse the data as CBOR: {0}")]
-    CborError(#[from] ciborium::de::Error<std::io::Error>),
+    CborError(#[from] ciboriumvalue::de::Error<std::io::Error>),
     #[error("The root value is not a tag")]
     InvalidRootValue,
     #[error("Expected COSE_SIGN1_CBOR_TAG ({}) found {0}", COSE_SIGN1_CBOR_TAG)]
@@ -34,7 +34,7 @@ pub enum CwtParseError {
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
     #[error("Cannot deserialize payload: {0}")]
-    InvalidPayload(#[source] ciborium::de::Error<std::io::Error>),
+    InvalidPayload(#[source] ciboriumvalue::de::Error<std::io::Error>),
     #[error("The signature section is not a binary string")]
     SignatureNotBinary,
 }
@@ -155,7 +155,7 @@ impl TryFrom<&[u8]> for Cwt {
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         use CwtParseError::*;
 
-        let cwt: Value = ciborium::de::from_reader(data)?;
+        let cwt: Value = ciboriumvalue::de::from_reader(data)?;
         let (tag_id, cwt_content) = cwt.as_tag().ok_or(InvalidRootValue)?;
         if *tag_id != COSE_SIGN1_CBOR_TAG {
             return Err(InvalidTag(*tag_id));
@@ -166,7 +166,7 @@ impl TryFrom<&[u8]> for Cwt {
         }
         let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
         let header_protected: CwtHeader =
-            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
+            ciboriumvalue::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
                 .map_err(|_| HeaderNotValidCbor)?
                 .as_map()
                 .ok_or(HeaderNotMap)?
@@ -177,7 +177,7 @@ impl TryFrom<&[u8]> for Cwt {
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
         let payload: DgcCertContainer =
-            ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
+            ciboriumvalue::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
         Ok(Cwt::new(
             header_protected_raw,
