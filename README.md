@@ -1,6 +1,6 @@
 # dgc
 
-![DGC rust library logo](dgc-rust-logo.svg)
+<img src="https://github.com/lmammino/dgc/raw/main/dgc-rust-logo.svg" alt="DGC rust library logo" width="400">
 
 [![Test](https://github.com/lmammino/dgc/actions/workflows/Test.yml/badge.svg)](https://github.com/lmammino/dgc/actions/workflows/Test.yml)
 [![codecov](https://codecov.io/gh/lmammino/dgc/branch/main/graph/badge.svg?token=4CNbvgaDc1)](https://codecov.io/gh/lmammino/dgc)
