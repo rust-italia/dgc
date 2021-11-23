@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 
@@ -8,12 +10,12 @@ use serde::{Deserialize, Serialize};
 pub struct Recovery {
     /// Disease agent targeted
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted`
-    pub tg: String,
+    pub tg: Cow<'static, str>,
     /// ISO 8601 complete date of first positive NAA test result
-    pub fr: String,
+    pub fr: Cow<'static, str>,
     /// Country of Test
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/country_vt`
-    pub co: String,
+    pub co: Cow<'static, str>,
     /// Certificate Issuer
     /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/issuer`
     pub is: String,
@@ -27,11 +29,9 @@ pub struct Recovery {
 }
 
 impl Recovery {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.tg = lookup_value(&expanded.tg);
-        expanded.fr = lookup_value(&expanded.fr);
-        expanded.co = lookup_value(&expanded.co);
-        expanded
+    pub fn expand_values(&mut self) {
+        self.tg = lookup_value(&self.tg);
+        self.fr = lookup_value(&self.fr);
+        self.co = lookup_value(&self.co);
     }
 }
