@@ -52,7 +52,7 @@ impl Test {
         self.tt = lookup_value(&self.tt);
         self.tr = lookup_value(&self.tr);
         if let Some(ma) = &mut self.ma {
-            *ma = lookup_value(&ma);
+            *ma = lookup_value(ma);
         }
         self.co = lookup_value(&self.co);
         self.is = lookup_value(&self.is);
