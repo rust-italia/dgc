@@ -13,7 +13,7 @@ license = "MIT"
 [dependencies]
 base45 = "3.0.0"
 base64 = "0.13.0"
-ciboriumvalue = "0.1.0" # TODO: this should be ciborium, once #25 gets merged
+ciborium = "0.2.0"
 der-parser = "6.0.0"
 inflate = "0.4.5"
 lazy_static = "1.4.0"
