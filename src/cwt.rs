@@ -1,5 +1,5 @@
 use crate::DgcCertContainer;
-use ciboriumvalue::{
+use ciborium::{
     ser::into_writer,
     value::{Integer, Value},
 };
@@ -16,7 +16,7 @@ const COSE_ECDSA512: i128 = -36;
 #[derive(Error, Debug)]
 pub enum CwtParseError {
     #[error("Cannot parse the data as CBOR: {0}")]
-    CborError(#[from] ciboriumvalue::de::Error<std::io::Error>),
+    CborError(#[from] ciborium::de::Error<std::io::Error>),
     #[error("The root value is not a tag")]
     InvalidRootValue,
     #[error("Expected COSE_SIGN1_CBOR_TAG ({}) found {0}", COSE_SIGN1_CBOR_TAG)]
@@ -34,7 +34,7 @@ pub enum CwtParseError {
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
     #[error("Cannot deserialize payload: {0}")]
-    InvalidPayload(#[source] ciboriumvalue::de::Error<std::io::Error>),
+    InvalidPayload(#[source] ciborium::de::Error<std::io::Error>),
     #[error("The signature section is not a binary string")]
     SignatureNotBinary,
 }
@@ -49,11 +49,12 @@ pub enum EcAlg {
 
 impl From<Integer> for EcAlg {
     fn from(i: Integer) -> Self {
-        match *i.value() {
+        let u: i128 = i.into();
+        match u {
             COSE_ECDSA256 => EcAlg::Ecdsa256,
             COSE_ECDSA384 => EcAlg::Ecdsa384,
             COSE_ECDSA512 => EcAlg::Ecdsa512,
-            _ => EcAlg::Unknown(*i.value()),
+            _ => EcAlg::Unknown(u),
         }
     }
 }
@@ -87,16 +88,17 @@ impl From<&[(Value, Value)]> for CwtHeader {
         let mut header = CwtHeader::new();
         // tries to find kid and alg and apply them to the header before returning it
         for (key, val) in data.iter() {
-            if let Value::Integer(k) = key {
-                if *k.value() == COSE_HEADER_KEY_KID {
+            if let Some(k) = key.as_integer() {
+                let k: i128 = k.into();
+                if k == COSE_HEADER_KEY_KID {
                     // found kid
                     if let Some(kid) = val.as_bytes() {
                         header.kid(kid.clone());
                     }
-                } else if *k.value() == COSE_HEADER_KEY_ALG {
+                } else if k == COSE_HEADER_KEY_ALG {
                     // found alg
                     if let Some(raw_alg) = val.as_integer() {
-                        let alg: EcAlg = (*raw_alg).into();
+                        let alg: EcAlg = raw_alg.into();
                         header.alg(alg);
                     }
                 }
@@ -155,10 +157,10 @@ impl TryFrom<&[u8]> for Cwt {
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         use CwtParseError::*;
 
-        let cwt: Value = ciboriumvalue::de::from_reader(data)?;
+        let cwt: Value = ciborium::de::from_reader(data)?;
         let (tag_id, cwt_content) = cwt.as_tag().ok_or(InvalidRootValue)?;
-        if *tag_id != COSE_SIGN1_CBOR_TAG {
-            return Err(InvalidTag(*tag_id));
+        if tag_id != COSE_SIGN1_CBOR_TAG {
+            return Err(InvalidTag(tag_id));
         }
         let parts = cwt_content.as_array().ok_or(InvalidParts)?;
         if parts.len() != 4 {
@@ -166,7 +168,7 @@ impl TryFrom<&[u8]> for Cwt {
         }
         let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
         let header_protected: CwtHeader =
-            ciboriumvalue::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
+            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
                 .map_err(|_| HeaderNotValidCbor)?
                 .as_map()
                 .ok_or(HeaderNotMap)?
@@ -177,7 +179,7 @@ impl TryFrom<&[u8]> for Cwt {
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
         let payload: DgcCertContainer =
-            ciboriumvalue::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
+            ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
         Ok(Cwt::new(
             header_protected_raw,
