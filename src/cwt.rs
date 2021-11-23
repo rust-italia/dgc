@@ -90,12 +90,12 @@ impl From<&[(Value, Value)]> for CwtHeader {
         for (key, val) in data.iter() {
             if let Some(k) = key.as_integer() {
                 let k: i128 = k.into();
-                if k == COSE_HEADER_KEY_KID.into() {
+                if k == COSE_HEADER_KEY_KID {
                     // found kid
                     if let Some(kid) = val.as_bytes() {
                         header.kid(kid.clone());
                     }
-                } else if k == COSE_HEADER_KEY_ALG.into() {
+                } else if k == COSE_HEADER_KEY_ALG {
                     // found alg
                     if let Some(raw_alg) = val.as_integer() {
                         let alg: EcAlg = raw_alg.into();
