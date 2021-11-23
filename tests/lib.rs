@@ -82,43 +82,43 @@ use std::path::PathBuf;
 // #[case::de_2dcode_raw_2_json("DE/2DCode/raw/2.json")] // SKIPPED. See #1
 // #[case::de_2dcode_raw_3_json("DE/2DCode/raw/3.json")] // SKIPPED. See #1
 // #[case::de_2dcode_raw_4_json("DE/2DCode/raw/4.json")] // SKIPPED. See #1
-// #[case::dk_2dcode_raw_1_json("DK/2DCode/raw/1.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_10_json("DK/2DCode/raw/10.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_11_json("DK/2DCode/raw/11.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_12_json("DK/2DCode/raw/12.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_2_json("DK/2DCode/raw/2.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_3_json("DK/2DCode/raw/3.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_4_json("DK/2DCode/raw/4.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_5_json("DK/2DCode/raw/5.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_7_json("DK/2DCode/raw/7.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::dk_2dcode_raw_8_json("DK/2DCode/raw/8.json")] // SKIPPED. `issued_at` is a float (see #3)
+#[case::dk_2dcode_raw_1_json("DK/2DCode/raw/1.json")]
+#[case::dk_2dcode_raw_10_json("DK/2DCode/raw/10.json")]
+#[case::dk_2dcode_raw_11_json("DK/2DCode/raw/11.json")]
+#[case::dk_2dcode_raw_12_json("DK/2DCode/raw/12.json")]
+#[case::dk_2dcode_raw_2_json("DK/2DCode/raw/2.json")]
+#[case::dk_2dcode_raw_3_json("DK/2DCode/raw/3.json")]
+#[case::dk_2dcode_raw_4_json("DK/2DCode/raw/4.json")]
+#[case::dk_2dcode_raw_5_json("DK/2DCode/raw/5.json")]
+#[case::dk_2dcode_raw_7_json("DK/2DCode/raw/7.json")]
+#[case::dk_2dcode_raw_8_json("DK/2DCode/raw/8.json")]
 // #[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")] // SKIPPED. `issued_at` is a float (see #3)
 // #[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")] // SKIPPED. `issued_at` is a float (see #3)
 // #[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_101_json("ES/2DCode/raw/101.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_102_json("ES/2DCode/raw/102.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_103_json("ES/2DCode/raw/103.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1101_json("ES/2DCode/raw/1101.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1102_json("ES/2DCode/raw/1102.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1103_json("ES/2DCode/raw/1103.json")] // SKIPPED. `issued_at` is a float (see #3)
+#[case::es_2dcode_raw_101_json("ES/2DCode/raw/101.json")]
+#[case::es_2dcode_raw_102_json("ES/2DCode/raw/102.json")]
+#[case::es_2dcode_raw_103_json("ES/2DCode/raw/103.json")]
+#[case::es_2dcode_raw_1101_json("ES/2DCode/raw/1101.json")]
+#[case::es_2dcode_raw_1102_json("ES/2DCode/raw/1102.json")]
+#[case::es_2dcode_raw_1103_json("ES/2DCode/raw/1103.json")]
 // #[case::es_2dcode_raw_1501_json("ES/2DCode/raw/1501.json")] // SKIPPED. Invalid COSE (missing tag)
 // #[case::es_2dcode_raw_1502_json("ES/2DCode/raw/1502.json")] // SKIPPED. `issued_at` is a float (see #3)
 // #[case::es_2dcode_raw_1503_json("ES/2DCode/raw/1503.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_201_json("ES/2DCode/raw/201.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_202_json("ES/2DCode/raw/202.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_203_json("ES/2DCode/raw/203.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_2101_json("ES/2DCode/raw/2101.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_2102_json("ES/2DCode/raw/2102.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_2103_json("ES/2DCode/raw/2103.json")] // SKIPPED. `issued_at` is a float (see #3)
+#[case::es_2dcode_raw_201_json("ES/2DCode/raw/201.json")]
+#[case::es_2dcode_raw_202_json("ES/2DCode/raw/202.json")]
+#[case::es_2dcode_raw_203_json("ES/2DCode/raw/203.json")]
+#[case::es_2dcode_raw_2101_json("ES/2DCode/raw/2101.json")]
+#[case::es_2dcode_raw_2102_json("ES/2DCode/raw/2102.json")]
+#[case::es_2dcode_raw_2103_json("ES/2DCode/raw/2103.json")]
 // #[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")] // SKIPPED. `issued_at` is a float (see #3)
 // #[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")] // SKIPPED. `issued_at` is a float (see #3)
 // #[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_501_json("ES/2DCode/raw/501.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_502_json("ES/2DCode/raw/502.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_503_json("ES/2DCode/raw/503.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_701_json("ES/2DCode/raw/701.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_702_json("ES/2DCode/raw/702.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_703_json("ES/2DCode/raw/703.json")] // SKIPPED. `issued_at` is a float (see #3)
+#[case::es_2dcode_raw_501_json("ES/2DCode/raw/501.json")]
+#[case::es_2dcode_raw_502_json("ES/2DCode/raw/502.json")]
+#[case::es_2dcode_raw_503_json("ES/2DCode/raw/503.json")]
+#[case::es_2dcode_raw_701_json("ES/2DCode/raw/701.json")]
+#[case::es_2dcode_raw_702_json("ES/2DCode/raw/702.json")]
+#[case::es_2dcode_raw_703_json("ES/2DCode/raw/703.json")]
 #[case::fi_2dcode_raw_1_json("FI/2DCode/raw/1.json")]
 #[case::fi_2dcode_raw_10_json("FI/2DCode/raw/10.json")]
 #[case::fi_2dcode_raw_2_json("FI/2DCode/raw/2.json")]
