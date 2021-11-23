@@ -1,377 +1,361 @@
-use std::collections::HashMap;
 
-lazy_static! {
-    /// Populated from https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets
-    /// List generated with the following Node.js snippet (for every valueset file):
-    /// > for (const [key, val] of Object.entries(fileData.valueSetValues)) {
-    /// >
-    /// >   console.log(\`m.insert("${key}", "${val.display}");\`)
-    /// >
-    /// > }
-    pub static ref VALUESET: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert("AD", "Andorra");
-        m.insert("AE", "United Arab Emirates");
-        m.insert("AF", "Afghanistan");
-        m.insert("AG", "Antigua and Barbuda");
-        m.insert("AI", "Anguilla");
-        m.insert("AL", "Albania");
-        m.insert("AM", "Armenia");
-        m.insert("AO", "Angola");
-        m.insert("AQ", "Antarctica");
-        m.insert("AR", "Argentina");
-        m.insert("AS", "American Samoa");
-        m.insert("AT", "Austria");
-        m.insert("AU", "Australia");
-        m.insert("AW", "Aruba");
-        m.insert("AX", "Åland Islands");
-        m.insert("AZ", "Azerbaijan");
-        m.insert("BA", "Bosnia and Herzegovina");
-        m.insert("BB", "Barbados");
-        m.insert("BD", "Bangladesh");
-        m.insert("BE", "Belgium");
-        m.insert("BF", "Burkina Faso");
-        m.insert("BG", "Bulgaria");
-        m.insert("BH", "Bahrain");
-        m.insert("BI", "Burundi");
-        m.insert("BJ", "Benin");
-        m.insert("BL", "Saint Barthélemy");
-        m.insert("BM", "Bermuda");
-        m.insert("BN", "Brunei Darussalam");
-        m.insert("BO", "Bolivia, Plurinational State of");
-        m.insert("BQ", "Bonaire, Sint Eustatius and Saba");
-        m.insert("BR", "Brazil");
-        m.insert("BS", "Bahamas");
-        m.insert("BT", "Bhutan");
-        m.insert("BV", "Bouvet Island");
-        m.insert("BW", "Botswana");
-        m.insert("BY", "Belarus");
-        m.insert("BZ", "Belize");
-        m.insert("CA", "Canada");
-        m.insert("CC", "Cocos (Keeling) Islands");
-        m.insert("CD", "Congo, the Democratic Republic of the");
-        m.insert("CF", "Central African Republic");
-        m.insert("CG", "Congo");
-        m.insert("CH", "Switzerland");
-        m.insert("CI", "Côte d''Ivoire");
-        m.insert("CK", "Cook Islands");
-        m.insert("CL", "Chile");
-        m.insert("CM", "Cameroon");
-        m.insert("CN", "China");
-        m.insert("CO", "Colombia");
-        m.insert("CR", "Costa Rica");
-        m.insert("CU", "Cuba");
-        m.insert("CV", "Cabo Verde");
-        m.insert("CW", "Curaçao");
-        m.insert("CX", "Christmas Island");
-        m.insert("CY", "Cyprus");
-        m.insert("CZ", "Czechia");
-        m.insert("DE", "Germany");
-        m.insert("DJ", "Djibouti");
-        m.insert("DK", "Denmark");
-        m.insert("DM", "Dominica");
-        m.insert("DO", "Dominican Republic");
-        m.insert("DZ", "Algeria");
-        m.insert("EC", "Ecuador");
-        m.insert("EE", "Estonia");
-        m.insert("EG", "Egypt");
-        m.insert("EH", "Western Sahara");
-        m.insert("ER", "Eritrea");
-        m.insert("ES", "Spain");
-        m.insert("ET", "Ethiopia");
-        m.insert("FI", "Finland");
-        m.insert("FJ", "Fiji");
-        m.insert("FK", "Falkland Islands (Malvinas)");
-        m.insert("FM", "Micronesia, Federated States of");
-        m.insert("FO", "Faroe Islands");
-        m.insert("FR", "France");
-        m.insert("GA", "Gabon");
-        m.insert("GB", "United Kingdom of Great Britain and Northern Ireland");
-        m.insert("GD", "Grenada");
-        m.insert("GE", "Georgia");
-        m.insert("GF", "French Guiana");
-        m.insert("GG", "Guernsey");
-        m.insert("GH", "Ghana");
-        m.insert("GI", "Gibraltar");
-        m.insert("GL", "Greenland");
-        m.insert("GM", "Gambia");
-        m.insert("GN", "Guinea");
-        m.insert("GP", "Guadeloupe");
-        m.insert("GQ", "Equatorial Guinea");
-        m.insert("GR", "Greece");
-        m.insert("GS", "South Georgia and the South Sandwich Islands");
-        m.insert("GT", "Guatemala");
-        m.insert("GU", "Guam");
-        m.insert("GW", "Guinea-Bissau");
-        m.insert("GY", "Guyana");
-        m.insert("HK", "Hong Kong");
-        m.insert("HM", "Heard Island and McDonald Islands");
-        m.insert("HN", "Honduras");
-        m.insert("HR", "Croatia");
-        m.insert("HT", "Haiti");
-        m.insert("HU", "Hungary");
-        m.insert("ID", "Indonesia");
-        m.insert("IE", "Ireland");
-        m.insert("IL", "Israel");
-        m.insert("IM", "Isle of Man");
-        m.insert("IN", "India");
-        m.insert("IO", "British Indian Ocean Territory");
-        m.insert("IQ", "Iraq");
-        m.insert("IR", "Iran, Islamic Republic of");
-        m.insert("IS", "Iceland");
-        m.insert("IT", "Italy");
-        m.insert("JE", "Jersey");
-        m.insert("JM", "Jamaica");
-        m.insert("JO", "Jordan");
-        m.insert("JP", "Japan");
-        m.insert("KE", "Kenya");
-        m.insert("KG", "Kyrgyzstan");
-        m.insert("KH", "Cambodia");
-        m.insert("KI", "Kiribati");
-        m.insert("KM", "Comoros");
-        m.insert("KN", "Saint Kitts and Nevis");
-        m.insert("KP", "Korea, Democratic People''s Republic of");
-        m.insert("KR", "Korea, Republic of");
-        m.insert("KW", "Kuwait");
-        m.insert("KY", "Cayman Islands");
-        m.insert("KZ", "Kazakhstan");
-        m.insert("LA", "Lao People''s Democratic Republic");
-        m.insert("LB", "Lebanon");
-        m.insert("LC", "Saint Lucia");
-        m.insert("LI", "Liechtenstein");
-        m.insert("LK", "Sri Lanka");
-        m.insert("LR", "Liberia");
-        m.insert("LS", "Lesotho");
-        m.insert("LT", "Lithuania");
-        m.insert("LU", "Luxembourg");
-        m.insert("LV", "Latvia");
-        m.insert("LY", "Libya");
-        m.insert("MA", "Morocco");
-        m.insert("MC", "Monaco");
-        m.insert("MD", "Moldova, Republic of");
-        m.insert("ME", "Montenegro");
-        m.insert("MF", "Saint Martin (French part)");
-        m.insert("MG", "Madagascar");
-        m.insert("MH", "Marshall Islands");
-        m.insert("MK", "Macedonia, the former Yugoslav Republic of");
-        m.insert("ML", "Mali");
-        m.insert("MM", "Myanmar");
-        m.insert("MN", "Mongolia");
-        m.insert("MO", "Macao");
-        m.insert("MP", "Northern Mariana Islands");
-        m.insert("MQ", "Martinique");
-        m.insert("MR", "Mauritania");
-        m.insert("MS", "Montserrat");
-        m.insert("MT", "Malta");
-        m.insert("MU", "Mauritius");
-        m.insert("MV", "Maldives");
-        m.insert("MW", "Malawi");
-        m.insert("MX", "Mexico");
-        m.insert("MY", "Malaysia");
-        m.insert("MZ", "Mozambique");
-        m.insert("NA", "Namibia");
-        m.insert("NC", "New Caledonia");
-        m.insert("NE", "Niger");
-        m.insert("NF", "Norfolk Island");
-        m.insert("NG", "Nigeria");
-        m.insert("NI", "Nicaragua");
-        m.insert("NL", "Netherlands");
-        m.insert("NO", "Norway");
-        m.insert("NP", "Nepal");
-        m.insert("NR", "Nauru");
-        m.insert("NU", "Niue");
-        m.insert("NZ", "New Zealand");
-        m.insert("OM", "Oman");
-        m.insert("PA", "Panama");
-        m.insert("PE", "Peru");
-        m.insert("PF", "French Polynesia");
-        m.insert("PG", "Papua New Guinea");
-        m.insert("PH", "Philippines");
-        m.insert("PK", "Pakistan");
-        m.insert("PL", "Poland");
-        m.insert("PM", "Saint Pierre and Miquelon");
-        m.insert("PN", "Pitcairn");
-        m.insert("PR", "Puerto Rico");
-        m.insert("PS", "Palestine, State of");
-        m.insert("PT", "Portugal");
-        m.insert("PW", "Palau");
-        m.insert("PY", "Paraguay");
-        m.insert("QA", "Qatar");
-        m.insert("RE", "Réunion");
-        m.insert("RO", "Romania");
-        m.insert("RS", "Serbia");
-        m.insert("RU", "Russian Federation");
-        m.insert("RW", "Rwanda");
-        m.insert("SA", "Saudi Arabia");
-        m.insert("SB", "Solomon Islands");
-        m.insert("SC", "Seychelles");
-        m.insert("SD", "Sudan");
-        m.insert("SE", "Sweden");
-        m.insert("SG", "Singapore");
-        m.insert("SH", "Saint Helena, Ascension and Tristan da Cunha");
-        m.insert("SI", "Slovenia");
-        m.insert("SJ", "Svalbard and Jan Mayen");
-        m.insert("SK", "Slovakia");
-        m.insert("SL", "Sierra Leone");
-        m.insert("SM", "San Marino");
-        m.insert("SN", "Senegal");
-        m.insert("SO", "Somalia");
-        m.insert("SR", "Suriname");
-        m.insert("SS", "South Sudan");
-        m.insert("ST", "Sao Tome and Principe");
-        m.insert("SV", "El Salvador");
-        m.insert("SX", "Sint Maarten (Dutch part)");
-        m.insert("SY", "Syrian Arab Republic");
-        m.insert("SZ", "Swaziland");
-        m.insert("TC", "Turks and Caicos Islands");
-        m.insert("TD", "Chad");
-        m.insert("TF", "French Southern Territories");
-        m.insert("TG", "Togo");
-        m.insert("TH", "Thailand");
-        m.insert("TJ", "Tajikistan");
-        m.insert("TK", "Tokelau");
-        m.insert("TL", "Timor-Leste");
-        m.insert("TM", "Turkmenistan");
-        m.insert("TN", "Tunisia");
-        m.insert("TO", "Tonga");
-        m.insert("TR", "Turkey");
-        m.insert("TT", "Trinidad and Tobago");
-        m.insert("TV", "Tuvalu");
-        m.insert("TW", "Taiwan, Province of China");
-        m.insert("TZ", "Tanzania, United Republic of");
-        m.insert("UA", "Ukraine");
-        m.insert("UG", "Uganda");
-        m.insert("UM", "United States Minor Outlying Islands");
-        m.insert("US", "United States of America");
-        m.insert("UY", "Uruguay");
-        m.insert("UZ", "Uzbekistan");
-        m.insert("VA", "Holy See");
-        m.insert("VC", "Saint Vincent and the Grenadines");
-        m.insert("VE", "Venezuela, Bolivarian Republic of");
-        m.insert("VG", "Virgin Islands, British");
-        m.insert("VI", "Virgin Islands,");
-        m.insert("VN", "Viet Nam");
-        m.insert("VU", "Vanuatu");
-        m.insert("WF", "Wallis and Futuna");
-        m.insert("WS", "Samoa");
-        m.insert("YE", "Yemen");
-        m.insert("YT", "Mayotte");
-        m.insert("ZA", "South Africa");
-        m.insert("ZM", "Zambia");
-        m.insert("ZW", "Zimbabwe");
-        m.insert("840539006", "COVID-19");
-        m.insert("308", "PCL Inc, PCL COVID19 Ag Rapid FIA");
-        m.insert("344", "SD BIOSENSOR Inc, STANDARD F COVID-19 Ag FIA");
-        m.insert("345", "SD BIOSENSOR Inc, STANDARD Q COVID-19 Ag Test");
-        m.insert("768", "ArcDia International Ltd, mariPOC SARS-CoV-2");
-        m.insert("1097", "Quidel Corporation, Sofia SARS Antigen FIA");
-        m.insert("1114", "Sugentech, Inc, SGTi-flex COVID-19 Ag");
-        m.insert("1144", "Green Cross Medical Science Corp., GENEDIA W COVID-19 Ag");
-        m.insert("1162", "Nal von minden GmbH, NADAL COVID-19 Ag Test");
-        m.insert("1173", "CerTest Biotec, CerTest SARS-CoV-2 Card test");
-        m.insert("1180", "MEDsan GmbH, MEDsan SARS-CoV-2 Antigen Rapid Test");
-        m.insert("1190", "möLab, COVID-19 Rapid Antigen Test");
-        m.insert("1199", "Oncosem Onkolojik Sistemler San. ve Tic. A.S., CAT");
-        m.insert("1215", "Hangzhou Laihe Biotech Co., Ltd, LYHER Novel Coronavirus (COVID-19) Antigen Test Kit(Colloidal Gold)");
-        m.insert("1218", "Siemens Healthineers, CLINITEST Rapid Covid-19 Antigen Test");
-        m.insert("1223", "BIOSYNEX S.A., BIOSYNEX COVID-19 Ag BSS");
-        m.insert("1225", "DDS DIAGNOSTIC, Test Rapid Covid-19 Antigen (tampon nazofaringian)");
-        m.insert("1232", "Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test");
-        m.insert("1236", "BTNX Inc, Rapid Response COVID-19 Antigen Rapid Test");
-        m.insert("1244", "GenBody, Inc, Genbody COVID-19 Ag Test");
-        m.insert("1246", "VivaChek Biotech (Hangzhou) Co., Ltd, Vivadiag SARS CoV 2 Ag Rapid Test");
-        m.insert("1253", "GenSure Biotech Inc, GenSure COVID-19 Antigen Rapid Kit (REF: P2004)");
-        m.insert("1256", "Hangzhou AllTest Biotech Co., Ltd, COVID-19 and Influenza A+B Antigen Combo Rapid Test");
-        m.insert("1263", "Humasis, Humasis COVID-19 Ag Test");
-        m.insert("1266", "Labnovation Technologies Inc, SARS-CoV-2 Antigen Rapid Test Kit");
-        m.insert("1267", "LumiQuick Diagnostics Inc, QuickProfile COVID-19 Antigen Test");
-        m.insert("1268", "LumiraDX, LumiraDx SARS-CoV-2 Ag Test");
-        m.insert("1271", "Precision Biosensor, Inc, Exdia COVID-19 Ag");
-        m.insert("1278", "Xiamen Boson Biotech Co. Ltd, Rapid SARS-CoV-2 Antigen Test Card");
-        m.insert("1295", "Zhejiang Anji Saianfu Biotech Co., Ltd, reOpenTest COVID-19 Antigen Rapid Test");
-        m.insert("1296", "Zhejiang Anji Saianfu Biotech Co., Ltd, AndLucky COVID-19 Antigen Rapid Test");
-        m.insert("1304", "AMEDA Labordiagnostik GmbH, AMP Rapid Test SARS-CoV-2 Ag");
-        m.insert("1319", "SGA Medikal, V-Chek SARS-CoV-2 Ag Rapid Test Kit (Colloidal Gold)");
-        m.insert("1331", "Beijing Lepu Medical Technology Co., Ltd, SARS-CoV-2 Antigen Rapid Test Kit");
-        m.insert("1333", "Joinstar Biomedical Technology Co., Ltd, COVID-19 Rapid Antigen Test (Colloidal Gold)");
-        m.insert("1341", "Qingdao Hightop Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test (Immunochromatography)");
-        m.insert("1343", "Zhezhiang Orient Gene Biotech Co., Ltd, Coronavirus Ag Rapid Test Cassette (Swab)");
-        m.insert("1360", "Guangdong Wesail Biotech Co., Ltd, COVID-19 Ag Test Kit");
-        m.insert("1363", "Hangzhou Clongene Biotech Co., Ltd, Covid-19 Antigen Rapid Test Kit");
-        m.insert("1365", "Hangzhou Clongene Biotech Co., Ltd, COVID-19/Influenza A+B Antigen Combo Rapid Test");
-        m.insert("1375", "DIALAB GmbH, DIAQUICK COVID-19 Ag Cassette");
-        m.insert("1392", "Hangzhou Testsea Biotechnology Co., Ltd, COVID-19 Antigen Test Cassette");
-        m.insert("1420", "NanoEntek, FREND COVID-19 Ag");
-        m.insert("1437", "Guangzhou Wondfo Biotech Co., Ltd, Wondfo 2019-nCoV Antigen Test (Lateral Flow Method)");
-        m.insert("1443", "Vitrosens Biotechnology Co., Ltd, RapidFor SARS-CoV-2 Rapid Ag Test");
-        m.insert("1456", "Xiamen Wiz Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test");
-        m.insert("1466", "TODA PHARMA, TODA CORONADIAG Ag");
-        m.insert("1468", "ACON Laboratories, Inc, Flowflex SARS-CoV-2 Antigen rapid test");
-        m.insert("1481", "MP Biomedicals, Rapid SARS-CoV-2 Antigen Test Card");
-        m.insert("1484", "Beijing Wantai Biological Pharmacy Enterprise Co., Ltd, Wantai SARS-CoV-2 Ag Rapid Test (FIA)");
-        m.insert("1489", "Safecare Biotech (Hangzhou) Co. Ltd, COVID-19 Antigen Rapid Test Kit (Swab)");
-        m.insert("1490", "Safecare Biotech (Hangzhou) Co. Ltd, Multi-Respiratory Virus Antigen Test Kit(Swab)  (Influenza A+B/ COVID-19)");
-        m.insert("1574", "Shenzhen Zhenrui Biotechnology Co., Ltd, Zhenrui ®COVID-19 Antigen Test Cassette");
-        m.insert("1604", "Roche (SD BIOSENSOR), SARS-CoV-2 Antigen Rapid Test");
-        m.insert("1606", "RapiGEN Inc, BIOCREDIT COVID-19 Ag - SARS-CoV 2 Antigen test");
-        m.insert("1654", "Asan Pharmaceutical CO., LTD, Asan Easy Test COVID-19 Ag");
-        m.insert("1736", "Anhui Deep Blue Medical Technology Co., Ltd, COVID-19 (SARS-CoV-2) Antigen Test Kit(Colloidal Gold)");
-        m.insert("1747", "Guangdong Hecin Scientific, Inc., 2019-nCoV Antigen Test Kit (colloidal gold method)");
-        m.insert("1763", "Xiamen AmonMed Biotechnology Co., Ltd, COVID-19 Antigen Rapid Test Kit (Colloidal Gold)");
-        m.insert("1764", "JOYSBIO (Tianjin) Biotechnology Co., Ltd, SARS-CoV-2 Antigen Rapid Test Kit (Colloidal Gold)");
-        m.insert("1767", "Healgen Scientific, Coronavirus Ag Rapid Test Cassette");
-        m.insert("1769", "Shenzhen Watmind Medical Co., Ltd, SARS-CoV-2 Ag Diagnostic Test Kit (Colloidal Gold)");
-        m.insert("1815", "Anhui Deep Blue Medical Technology Co., Ltd, COVID-19 (SARS-CoV-2) Antigen Test Kit (Colloidal Gold) - Nasal Swab");
-        m.insert("1822", "Anbio (Xiamen) Biotechnology Co., Ltd, Rapid COVID-19 Antigen Test(Colloidal Gold)");
-        m.insert("1833", "AAZ-LMB, COVID-VIRO");
-        m.insert("1844", "Hangzhou Immuno Biotech Co.,Ltd, Immunobio SARS-CoV-2 Antigen ANTERIOR NASAL Rapid Test Kit (minimal invasive)");
-        m.insert("1870", "Beijing Hotgen Biotech Co., Ltd, Novel Coronavirus 2019-nCoV Antigen Test (Colloidal Gold)");
-        m.insert("1884", "Xiamen Wiz Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test (Colloidal Gold)");
-        m.insert("1906", "Azure Biotech Inc, COVID-19 Antigen Rapid Test Device");
-        m.insert("1919", "Core Technology Co., Ltd, Coretests COVID-19 Ag Test");
-        m.insert("1934", "Tody Laboratories Int., Coronavirus (SARS-CoV 2) Antigen - Oral Fluid");
-        m.insert("2010", "Atlas Link Technology Co., Ltd., NOVA Test® SARS-CoV-2 Antigen Rapid Test Kit (Colloidal Gold Immunochromatography)");
-        m.insert("2017", "Shenzhen Ultra-Diagnostics Biotec.Co.,Ltd, SARS-CoV-2 Antigen Test Kit");
-        m.insert("260373001", "Detected");
-        m.insert("260415000", "Not detected");
-        m.insert("LP6464-4", "Nucleic acid amplification with probe detection");
-        m.insert("LP217198-3", "Rapid immunoassay");
-        m.insert("ORG-100001699", "AstraZeneca AB");
-        m.insert("ORG-100030215", "Biontech Manufacturing GmbH");
-        m.insert("ORG-100001417", "Janssen-Cilag International");
-        m.insert("ORG-100031184", "Moderna Biotech Spain S.L.");
-        m.insert("ORG-100006270", "Curevac AG");
-        m.insert("ORG-100013793", "CanSino Biologics");
-        m.insert("ORG-100020693", "China Sinopharm International Corp. - Beijing location");
-        m.insert("ORG-100010771", "Sinopharm Weiqida Europe Pharmaceutical s.r.o. - Prague location");
-        m.insert("ORG-100024420", "Sinopharm Zhijun (Shenzhen) Pharmaceutical Co. Ltd. - Shenzhen location");
-        m.insert("ORG-100032020", "Novavax CZ AS");
-        m.insert("Gamaleya-Research-Institute", "Gamaleya Research Institute");
-        m.insert("Vector-Institute", "Vector Institute");
-        m.insert("Sinovac-Biotech", "Sinovac Biotech");
-        m.insert("Bharat-Biotech", "Bharat Biotech");
-        m.insert("EU/1/20/1528", "Comirnaty");
-        m.insert("EU/1/20/1507", "COVID-19 Vaccine Moderna");
-        m.insert("EU/1/21/1529", "Vaxzevria");
-        m.insert("EU/1/20/1525", "COVID-19 Vaccine Janssen");
-        m.insert("CVnCoV", "CVnCoV");
-        m.insert("Sputnik-V", "Sputnik-V");
-        m.insert("Convidecia", "Convidecia");
-        m.insert("EpiVacCorona", "EpiVacCorona");
-        m.insert("BBIBP-CorV", "BBIBP-CorV");
-        m.insert("Inactivated-SARS-CoV-2-Vero-Cell", "Inactivated SARS-CoV-2 (Vero Cell)");
-        m.insert("CoronaVac", "CoronaVac");
-        m.insert("Covaxin", "Covaxin (also known as BBV152 A, B, C)");
-        m.insert("1119305005", "SARS-CoV-2 antigen vaccine");
-        m.insert("1119349007", "SARS-CoV-2 mRNA vaccine");
-        m.insert("J07BX03", "covid-19 vaccines");
-
-        m
-    };
-}
-
-pub fn lookup_value(value_id: &str) -> String {
-    VALUESET
-        .get(value_id)
-        .map_or(value_id.to_string(), |s| String::from(*s))
+pub fn lookup_value(value_id: &str) -> &str {
+    match value_id {
+        "AD" => "Andorra",
+        "AE" => "United Arab Emirates",
+        "AF" => "Afghanistan",
+        "AG" => "Antigua and Barbuda",
+        "AI" => "Anguilla",
+        "AL" => "Albania",
+        "AM" => "Armenia",
+        "AO" => "Angola",
+        "AQ" => "Antarctica",
+        "AR" => "Argentina",
+        "AS" => "American Samoa",
+        "AT" => "Austria",
+        "AU" => "Australia",
+        "AW" => "Aruba",
+        "AX" => "Åland Islands",
+        "AZ" => "Azerbaijan",
+        "BA" => "Bosnia and Herzegovina",
+        "BB" => "Barbados",
+        "BD" => "Bangladesh",
+        "BE" => "Belgium",
+        "BF" => "Burkina Faso",
+        "BG" => "Bulgaria",
+        "BH" => "Bahrain",
+        "BI" => "Burundi",
+        "BJ" => "Benin",
+        "BL" => "Saint Barthélemy",
+        "BM" => "Bermuda",
+        "BN" => "Brunei Darussalam",
+        "BO" => "Bolivia, Plurinational State of",
+        "BQ" => "Bonaire, Sint Eustatius and Saba",
+        "BR" => "Brazil",
+        "BS" => "Bahamas",
+        "BT" => "Bhutan",
+        "BV" => "Bouvet Island",
+        "BW" => "Botswana",
+        "BY" => "Belarus",
+        "BZ" => "Belize",
+        "CA" => "Canada",
+        "CC" => "Cocos (Keeling) Islands",
+        "CD" => "Congo, the Democratic Republic of the",
+        "CF" => "Central African Republic",
+        "CG" => "Congo",
+        "CH" => "Switzerland",
+        "CI" => "Côte d''Ivoire",
+        "CK" => "Cook Islands",
+        "CL" => "Chile",
+        "CM" => "Cameroon",
+        "CN" => "China",
+        "CO" => "Colombia",
+        "CR" => "Costa Rica",
+        "CU" => "Cuba",
+        "CV" => "Cabo Verde",
+        "CW" => "Curaçao",
+        "CX" => "Christmas Island",
+        "CY" => "Cyprus",
+        "CZ" => "Czechia",
+        "DE" => "Germany",
+        "DJ" => "Djibouti",
+        "DK" => "Denmark",
+        "DM" => "Dominica",
+        "DO" => "Dominican Republic",
+        "DZ" => "Algeria",
+        "EC" => "Ecuador",
+        "EE" => "Estonia",
+        "EG" => "Egypt",
+        "EH" => "Western Sahara",
+        "ER" => "Eritrea",
+        "ES" => "Spain",
+        "ET" => "Ethiopia",
+        "FI" => "Finland",
+        "FJ" => "Fiji",
+        "FK" => "Falkland Islands (Malvinas)",
+        "FM" => "Micronesia, Federated States of",
+        "FO" => "Faroe Islands",
+        "FR" => "France",
+        "GA" => "Gabon",
+        "GB" => "United Kingdom of Great Britain and Northern Ireland",
+        "GD" => "Grenada",
+        "GE" => "Georgia",
+        "GF" => "French Guiana",
+        "GG" => "Guernsey",
+        "GH" => "Ghana",
+        "GI" => "Gibraltar",
+        "GL" => "Greenland",
+        "GM" => "Gambia",
+        "GN" => "Guinea",
+        "GP" => "Guadeloupe",
+        "GQ" => "Equatorial Guinea",
+        "GR" => "Greece",
+        "GS" => "South Georgia and the South Sandwich Islands",
+        "GT" => "Guatemala",
+        "GU" => "Guam",
+        "GW" => "Guinea-Bissau",
+        "GY" => "Guyana",
+        "HK" => "Hong Kong",
+        "HM" => "Heard Island and McDonald Islands",
+        "HN" => "Honduras",
+        "HR" => "Croatia",
+        "HT" => "Haiti",
+        "HU" => "Hungary",
+        "ID" => "Indonesia",
+        "IE" => "Ireland",
+        "IL" => "Israel",
+        "IM" => "Isle of Man",
+        "IN" => "India",
+        "IO" => "British Indian Ocean Territory",
+        "IQ" => "Iraq",
+        "IR" => "Iran, Islamic Republic of",
+        "IS" => "Iceland",
+        "IT" => "Italy",
+        "JE" => "Jersey",
+        "JM" => "Jamaica",
+        "JO" => "Jordan",
+        "JP" => "Japan",
+        "KE" => "Kenya",
+        "KG" => "Kyrgyzstan",
+        "KH" => "Cambodia",
+        "KI" => "Kiribati",
+        "KM" => "Comoros",
+        "KN" => "Saint Kitts and Nevis",
+        "KP" => "Korea, Democratic People''s Republic of",
+        "KR" => "Korea, Republic of",
+        "KW" => "Kuwait",
+        "KY" => "Cayman Islands",
+        "KZ" => "Kazakhstan",
+        "LA" => "Lao People''s Democratic Republic",
+        "LB" => "Lebanon",
+        "LC" => "Saint Lucia",
+        "LI" => "Liechtenstein",
+        "LK" => "Sri Lanka",
+        "LR" => "Liberia",
+        "LS" => "Lesotho",
+        "LT" => "Lithuania",
+        "LU" => "Luxembourg",
+        "LV" => "Latvia",
+        "LY" => "Libya",
+        "MA" => "Morocco",
+        "MC" => "Monaco",
+        "MD" => "Moldova, Republic of",
+        "ME" => "Montenegro",
+        "MF" => "Saint Martin (French part)",
+        "MG" => "Madagascar",
+        "MH" => "Marshall Islands",
+        "MK" => "Macedonia, the former Yugoslav Republic of",
+        "ML" => "Mali",
+        "MM" => "Myanmar",
+        "MN" => "Mongolia",
+        "MO" => "Macao",
+        "MP" => "Northern Mariana Islands",
+        "MQ" => "Martinique",
+        "MR" => "Mauritania",
+        "MS" => "Montserrat",
+        "MT" => "Malta",
+        "MU" => "Mauritius",
+        "MV" => "Maldives",
+        "MW" => "Malawi",
+        "MX" => "Mexico",
+        "MY" => "Malaysia",
+        "MZ" => "Mozambique",
+        "NA" => "Namibia",
+        "NC" => "New Caledonia",
+        "NE" => "Niger",
+        "NF" => "Norfolk Island",
+        "NG" => "Nigeria",
+        "NI" => "Nicaragua",
+        "NL" => "Netherlands",
+        "NO" => "Norway",
+        "NP" => "Nepal",
+        "NR" => "Nauru",
+        "NU" => "Niue",
+        "NZ" => "New Zealand",
+        "OM" => "Oman",
+        "PA" => "Panama",
+        "PE" => "Peru",
+        "PF" => "French Polynesia",
+        "PG" => "Papua New Guinea",
+        "PH" => "Philippines",
+        "PK" => "Pakistan",
+        "PL" => "Poland",
+        "PM" => "Saint Pierre and Miquelon",
+        "PN" => "Pitcairn",
+        "PR" => "Puerto Rico",
+        "PS" => "Palestine, State of",
+        "PT" => "Portugal",
+        "PW" => "Palau",
+        "PY" => "Paraguay",
+        "QA" => "Qatar",
+        "RE" => "Réunion",
+        "RO" => "Romania",
+        "RS" => "Serbia",
+        "RU" => "Russian Federation",
+        "RW" => "Rwanda",
+        "SA" => "Saudi Arabia",
+        "SB" => "Solomon Islands",
+        "SC" => "Seychelles",
+        "SD" => "Sudan",
+        "SE" => "Sweden",
+        "SG" => "Singapore",
+        "SH" => "Saint Helena, Ascension and Tristan da Cunha",
+        "SI" => "Slovenia",
+        "SJ" => "Svalbard and Jan Mayen",
+        "SK" => "Slovakia",
+        "SL" => "Sierra Leone",
+        "SM" => "San Marino",
+        "SN" => "Senegal",
+        "SO" => "Somalia",
+        "SR" => "Suriname",
+        "SS" => "South Sudan",
+        "ST" => "Sao Tome and Principe",
+        "SV" => "El Salvador",
+        "SX" => "Sint Maarten (Dutch part)",
+        "SY" => "Syrian Arab Republic",
+        "SZ" => "Swaziland",
+        "TC" => "Turks and Caicos Islands",
+        "TD" => "Chad",
+        "TF" => "French Southern Territories",
+        "TG" => "Togo",
+        "TH" => "Thailand",
+        "TJ" => "Tajikistan",
+        "TK" => "Tokelau",
+        "TL" => "Timor-Leste",
+        "TM" => "Turkmenistan",
+        "TN" => "Tunisia",
+        "TO" => "Tonga",
+        "TR" => "Turkey",
+        "TT" => "Trinidad and Tobago",
+        "TV" => "Tuvalu",
+        "TW" => "Taiwan, Province of China",
+        "TZ" => "Tanzania, United Republic of",
+        "UA" => "Ukraine",
+        "UG" => "Uganda",
+        "UM" => "United States Minor Outlying Islands",
+        "US" => "United States of America",
+        "UY" => "Uruguay",
+        "UZ" => "Uzbekistan",
+        "VA" => "Holy See",
+        "VC" => "Saint Vincent and the Grenadines",
+        "VE" => "Venezuela, Bolivarian Republic of",
+        "VG" => "Virgin Islands, British",
+        "VI" => "Virgin Islands,",
+        "VN" => "Viet Nam",
+        "VU" => "Vanuatu",
+        "WF" => "Wallis and Futuna",
+        "WS" => "Samoa",
+        "YE" => "Yemen",
+        "YT" => "Mayotte",
+        "ZA" => "South Africa",
+        "ZM" => "Zambia",
+        "ZW" => "Zimbabwe",
+        "840539006" => "COVID-19",
+        "308" => "PCL Inc, PCL COVID19 Ag Rapid FIA",
+        "344" => "SD BIOSENSOR Inc, STANDARD F COVID-19 Ag FIA",
+        "345" => "SD BIOSENSOR Inc, STANDARD Q COVID-19 Ag Test",
+        "768" => "ArcDia International Ltd, mariPOC SARS-CoV-2",
+        "1097" => "Quidel Corporation, Sofia SARS Antigen FIA",
+        "1114" => "Sugentech, Inc, SGTi-flex COVID-19 Ag",
+        "1144" => "Green Cross Medical Science Corp., GENEDIA W COVID-19 Ag",
+        "1162" => "Nal von minden GmbH, NADAL COVID-19 Ag Test",
+        "1173" => "CerTest Biotec, CerTest SARS-CoV-2 Card test",
+        "1180" => "MEDsan GmbH, MEDsan SARS-CoV-2 Antigen Rapid Test",
+        "1190" => "möLab, COVID-19 Rapid Antigen Test",
+        "1199" => "Oncosem Onkolojik Sistemler San. ve Tic. A.S., CAT",
+        "1215" => "Hangzhou Laihe Biotech Co., Ltd, LYHER Novel Coronavirus (COVID-19) Antigen Test Kit(Colloidal Gold)",
+        "1218" => "Siemens Healthineers, CLINITEST Rapid Covid-19 Antigen Test",
+        "1223" => "BIOSYNEX S.A., BIOSYNEX COVID-19 Ag BSS",
+        "1225" => "DDS DIAGNOSTIC, Test Rapid Covid-19 Antigen (tampon nazofaringian)",
+        "1232" => "Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test",
+        "1236" => "BTNX Inc, Rapid Response COVID-19 Antigen Rapid Test",
+        "1244" => "GenBody, Inc, Genbody COVID-19 Ag Test",
+        "1246" => "VivaChek Biotech (Hangzhou) Co., Ltd, Vivadiag SARS CoV 2 Ag Rapid Test",
+        "1253" => "GenSure Biotech Inc, GenSure COVID-19 Antigen Rapid Kit (REF: P2004)",
+        "1256" => "Hangzhou AllTest Biotech Co., Ltd, COVID-19 and Influenza A+B Antigen Combo Rapid Test",
+        "1263" => "Humasis, Humasis COVID-19 Ag Test",
+        "1266" => "Labnovation Technologies Inc, SARS-CoV-2 Antigen Rapid Test Kit",
+        "1267" => "LumiQuick Diagnostics Inc, QuickProfile COVID-19 Antigen Test",
+        "1268" => "LumiraDX, LumiraDx SARS-CoV-2 Ag Test",
+        "1271" => "Precision Biosensor, Inc, Exdia COVID-19 Ag",
+        "1278" => "Xiamen Boson Biotech Co. Ltd, Rapid SARS-CoV-2 Antigen Test Card",
+        "1295" => "Zhejiang Anji Saianfu Biotech Co., Ltd, reOpenTest COVID-19 Antigen Rapid Test",
+        "1296" => "Zhejiang Anji Saianfu Biotech Co., Ltd, AndLucky COVID-19 Antigen Rapid Test",
+        "1304" => "AMEDA Labordiagnostik GmbH, AMP Rapid Test SARS-CoV-2 Ag",
+        "1319" => "SGA Medikal, V-Chek SARS-CoV-2 Ag Rapid Test Kit (Colloidal Gold)",
+        "1331" => "Beijing Lepu Medical Technology Co., Ltd, SARS-CoV-2 Antigen Rapid Test Kit",
+        "1333" => "Joinstar Biomedical Technology Co., Ltd, COVID-19 Rapid Antigen Test (Colloidal Gold)",
+        "1341" => "Qingdao Hightop Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test (Immunochromatography)",
+        "1343" => "Zhezhiang Orient Gene Biotech Co., Ltd, Coronavirus Ag Rapid Test Cassette (Swab)",
+        "1360" => "Guangdong Wesail Biotech Co., Ltd, COVID-19 Ag Test Kit",
+        "1363" => "Hangzhou Clongene Biotech Co., Ltd, Covid-19 Antigen Rapid Test Kit",
+        "1365" => "Hangzhou Clongene Biotech Co., Ltd, COVID-19/Influenza A+B Antigen Combo Rapid Test",
+        "1375" => "DIALAB GmbH, DIAQUICK COVID-19 Ag Cassette",
+        "1392" => "Hangzhou Testsea Biotechnology Co., Ltd, COVID-19 Antigen Test Cassette",
+        "1420" => "NanoEntek, FREND COVID-19 Ag",
+        "1437" => "Guangzhou Wondfo Biotech Co., Ltd, Wondfo 2019-nCoV Antigen Test (Lateral Flow Method)",
+        "1443" => "Vitrosens Biotechnology Co., Ltd, RapidFor SARS-CoV-2 Rapid Ag Test",
+        "1456" => "Xiamen Wiz Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test",
+        "1466" => "TODA PHARMA, TODA CORONADIAG Ag",
+        "1468" => "ACON Laboratories, Inc, Flowflex SARS-CoV-2 Antigen rapid test",
+        "1481" => "MP Biomedicals, Rapid SARS-CoV-2 Antigen Test Card",
+        "1484" => "Beijing Wantai Biological Pharmacy Enterprise Co., Ltd, Wantai SARS-CoV-2 Ag Rapid Test (FIA)",
+        "1489" => "Safecare Biotech (Hangzhou) Co. Ltd, COVID-19 Antigen Rapid Test Kit (Swab)",
+        "1490" => "Safecare Biotech (Hangzhou) Co. Ltd, Multi-Respiratory Virus Antigen Test Kit(Swab)  (Influenza A+B/ COVID-19)",
+        "1574" => "Shenzhen Zhenrui Biotechnology Co., Ltd, Zhenrui ®COVID-19 Antigen Test Cassette",
+        "1604" => "Roche (SD BIOSENSOR), SARS-CoV-2 Antigen Rapid Test",
+        "1606" => "RapiGEN Inc, BIOCREDIT COVID-19 Ag - SARS-CoV 2 Antigen test",
+        "1654" => "Asan Pharmaceutical CO., LTD, Asan Easy Test COVID-19 Ag",
+        "1736" => "Anhui Deep Blue Medical Technology Co., Ltd, COVID-19 (SARS-CoV-2) Antigen Test Kit(Colloidal Gold)",
+        "1747" => "Guangdong Hecin Scientific, Inc., 2019-nCoV Antigen Test Kit (colloidal gold method)",
+        "1763" => "Xiamen AmonMed Biotechnology Co., Ltd, COVID-19 Antigen Rapid Test Kit (Colloidal Gold)",
+        "1764" => "JOYSBIO (Tianjin) Biotechnology Co., Ltd, SARS-CoV-2 Antigen Rapid Test Kit (Colloidal Gold)",
+        "1767" => "Healgen Scientific, Coronavirus Ag Rapid Test Cassette",
+        "1769" => "Shenzhen Watmind Medical Co., Ltd, SARS-CoV-2 Ag Diagnostic Test Kit (Colloidal Gold)",
+        "1815" => "Anhui Deep Blue Medical Technology Co., Ltd, COVID-19 (SARS-CoV-2) Antigen Test Kit (Colloidal Gold) - Nasal Swab",
+        "1822" => "Anbio (Xiamen) Biotechnology Co., Ltd, Rapid COVID-19 Antigen Test(Colloidal Gold)",
+        "1833" => "AAZ-LMB, COVID-VIRO",
+        "1844" => "Hangzhou Immuno Biotech Co.,Ltd, Immunobio SARS-CoV-2 Antigen ANTERIOR NASAL Rapid Test Kit (minimal invasive)",
+        "1870" => "Beijing Hotgen Biotech Co., Ltd, Novel Coronavirus 2019-nCoV Antigen Test (Colloidal Gold)",
+        "1884" => "Xiamen Wiz Biotech Co., Ltd, SARS-CoV-2 Antigen Rapid Test (Colloidal Gold)",
+        "1906" => "Azure Biotech Inc, COVID-19 Antigen Rapid Test Device",
+        "1919" => "Core Technology Co., Ltd, Coretests COVID-19 Ag Test",
+        "1934" => "Tody Laboratories Int., Coronavirus (SARS-CoV 2) Antigen - Oral Fluid",
+        "2010" => "Atlas Link Technology Co., Ltd., NOVA Test® SARS-CoV-2 Antigen Rapid Test Kit (Colloidal Gold Immunochromatography)",
+        "2017" => "Shenzhen Ultra-Diagnostics Biotec.Co.,Ltd, SARS-CoV-2 Antigen Test Kit",
+        "260373001" => "Detected",
+        "260415000" => "Not detected",
+        "LP6464-4" => "Nucleic acid amplification with probe detection",
+        "LP217198-3" => "Rapid immunoassay",
+        "ORG-100001699" => "AstraZeneca AB",
+        "ORG-100030215" => "Biontech Manufacturing GmbH",
+        "ORG-100001417" => "Janssen-Cilag International",
+        "ORG-100031184" => "Moderna Biotech Spain S.L.",
+        "ORG-100006270" => "Curevac AG",
+        "ORG-100013793" => "CanSino Biologics",
+        "ORG-100020693" => "China Sinopharm International Corp. - Beijing location",
+        "ORG-100010771" => "Sinopharm Weiqida Europe Pharmaceutical s.r.o. - Prague location",
+        "ORG-100024420" => "Sinopharm Zhijun (Shenzhen) Pharmaceutical Co. Ltd. - Shenzhen location",
+        "ORG-100032020" => "Novavax CZ AS",
+        "Gamaleya-Research-Institute" => "Gamaleya Research Institute",
+        "Vector-Institute" => "Vector Institute",
+        "Sinovac-Biotech" => "Sinovac Biotech",
+        "Bharat-Biotech" => "Bharat Biotech",
+        "EU/1/20/1528" => "Comirnaty",
+        "EU/1/20/1507" => "COVID-19 Vaccine Moderna",
+        "EU/1/21/1529" => "Vaxzevria",
+        "EU/1/20/1525" => "COVID-19 Vaccine Janssen",
+        "CVnCoV" => "CVnCoV",
+        "Sputnik-V" => "Sputnik-V",
+        "Convidecia" => "Convidecia",
+        "EpiVacCorona" => "EpiVacCorona",
+        "BBIBP-CorV" => "BBIBP-CorV",
+        "Inactivated-SARS-CoV-2-Vero-Cell" => "Inactivated SARS-CoV-2 (Vero Cell)",
+        "CoronaVac" => "CoronaVac",
+        "Covaxin" => "Covaxin (also known as BBV152 A, B, C)",
+        "1119305005" => "SARS-CoV-2 antigen vaccine",
+        "1119349007" => "SARS-CoV-2 mRNA vaccine",
+        "J07BX03" => "covid-19 vaccines",
+        _ => value_id,
+    }
 }
