@@ -27,14 +27,11 @@ pub struct DgcCertContainer {
 }
 
 impl DgcCertContainer {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.certs = self
+    pub fn expand_values(&mut self) {
+        self
             .certs
-            .iter()
-            .map(|(id, t)| (*id, t.expand_values()))
-            .collect();
-        expanded
+            .iter_mut()
+            .for_each(|(_, t)| t.expand_values());
     }
 }
 

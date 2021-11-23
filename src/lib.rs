@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
 
 pub mod cwt;
 pub mod dgc_cert;

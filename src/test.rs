@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 
@@ -7,10 +9,10 @@ use serde::{Deserialize, Serialize};
 pub struct Test {
     /// Disease agent targeted
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted`
-    pub tg: String,
+    pub tg: Cow<'static, str>,
     /// Type of test
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-type`
-    pub tt: String,
+    pub tt: Cow<'static, str>,
     /// NAA Test Name
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -19,7 +21,7 @@ pub struct Test {
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-manf`
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ma: Option<String>,
+    pub ma: Option<Cow<'static, str>>,
     /// Date/Time of Sample Collection
     pub sc: String,
     /// Date/Time (???)
@@ -28,31 +30,31 @@ pub struct Test {
     pub dr: Option<String>,
     /// Test Result
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-result`
-    pub tr: String,
+    pub tr: Cow<'static, str>,
     /// Testing Centre
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tc: Option<String>,
     /// Country of Test
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/country_vt`
-    pub co: String,
+    pub co: Cow<'static, str>,
     /// Certificate Issuer
     /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/issuer`
-    pub is: String,
+    pub is: Cow<'static, str>,
     /// Unique Certificate Identifier, UVCI
     /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/certificate_id`
     pub ci: String,
 }
 
 impl Test {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.tg = lookup_value(&expanded.tg);
-        expanded.tt = lookup_value(&expanded.tt);
-        expanded.tr = lookup_value(&expanded.tr);
-        expanded.ma = expanded.ma.map(|v| lookup_value(&v));
-        expanded.co = lookup_value(&expanded.co);
-        expanded.is = lookup_value(&expanded.is);
-        expanded
+    pub fn expand_values(&mut self) {
+        self.tg = lookup_value(&self.tg);
+        self.tt = lookup_value(&self.tt);
+        self.tr = lookup_value(&self.tr);
+        if let Some(ma) = &mut self.ma {
+            *ma = lookup_value(&ma);
+        }
+        self.co = lookup_value(&self.co);
+        self.is = lookup_value(&self.is);
     }
 }

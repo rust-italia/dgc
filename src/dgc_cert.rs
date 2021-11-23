@@ -30,17 +30,17 @@ pub struct DgcCert {
 }
 
 impl DgcCert {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.t = self.t.iter().map(|t| t.expand_values()).collect();
-        expanded.v = self.v.iter().map(|v| v.expand_values()).collect();
-        expanded.r = self.r.iter().map(|r| r.expand_values()).collect();
-        expanded
+    pub fn expand_values(&mut self) {
+        self.t.iter_mut().for_each(|t| t.expand_values());
+        self.v.iter_mut().for_each(|v| v.expand_values());
+        self.r.iter_mut().for_each(|r| r.expand_values());
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Cow;
+
     use super::*;
 
     #[test]
@@ -56,13 +56,13 @@ mod tests {
             },
             dob: String::from("1990-01-01"),
             t: vec![Test {
-                tg: String::from("840539006"),
-                tt: String::from("LP6464-4"),
+                tg: Cow::from("840539006"),
+                tt: Cow::from("LP6464-4"),
                 sc: String::from("2021-10-09T12:03:12Z"),
-                tr: String::from("260415000"),
+                tr: Cow::from("260415000"),
                 tc: Some(String::from("Alhosn One Day Surgery")),
-                co: String::from("AE"),
-                is: String::from("Ministry of Health & Prevention"),
+                co: Cow::from("AE"),
+                is: Cow::from("Ministry of Health & Prevention"),
                 ci: String::from("URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06"),
                 nm: None,
                 ma: None,
@@ -115,7 +115,7 @@ mod tests {
         assert_eq!(cert.t[0].tg, String::from("840539006"));
         assert_eq!(cert.t[0].tt, String::from("LP6464-4"));
         assert_eq!(cert.t[0].nm, Some(String::from("Roche LightCycler qPCR")));
-        assert_eq!(cert.t[0].ma, Some(String::from("1232")));
+        assert_eq!(cert.t[0].ma, Some(Cow::from("1232")));
         assert_eq!(cert.t[0].sc, String::from("2021-05-03T10:27:15Z"));
         assert_eq!(cert.t[0].dr, Some(String::from("2021-05-11T12:27:15Z")));
         assert_eq!(cert.t[0].tr, String::from("260415000"));
@@ -156,8 +156,8 @@ mod tests {
             ]
           }
 "#;
-        let cert: DgcCert = serde_json::from_str(json_data).unwrap();
-        let cert = cert.expand_values();
+        let mut cert: DgcCert = serde_json::from_str(json_data).unwrap();
+        cert.expand_values();
         assert_eq!(cert.ver, String::from("1.0.0"));
         assert_eq!(cert.nam.r#fn, String::from("Di Caprio"));
         assert_eq!(cert.nam.fnt, String::from("DI<CAPRIO"));
@@ -172,7 +172,7 @@ mod tests {
         assert_eq!(cert.t[0].nm, Some(String::from("Roche LightCycler qPCR")));
         assert_eq!(
             cert.t[0].ma,
-            Some(String::from(
+            Some(Cow::from(
                 "Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test"
             ))
         );

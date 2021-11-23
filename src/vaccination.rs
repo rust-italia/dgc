@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 
@@ -7,16 +9,16 @@ use serde::{Deserialize, Serialize};
 pub struct Vaccination {
     /// disease or agent targeted
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted`
-    pub tg: String,
+    pub tg: Cow<'static, str>,
     /// vaccine or prophylaxis
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-prophylaxis`
-    pub vp: String,
+    pub vp: Cow<'static, str>,
     /// vaccine medicinal product
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-medicinal-product`
-    pub mp: String,
+    pub mp: Cow<'static, str>,
     /// Marketing Authorization Holder - if no MAH present, then manufacturer
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-mah-manf`
-    pub ma: String,
+    pub ma: Cow<'static, str>,
     /// Dose Number
     /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/dose_posint`
     pub dn: usize,
@@ -27,7 +29,7 @@ pub struct Vaccination {
     pub dt: String,
     /// Country of Vaccination
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/country_vt`
-    pub co: String,
+    pub co: Cow<'static, str>,
     /// Certificate Issuer
     /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/issuer`
     pub is: String,
@@ -37,13 +39,11 @@ pub struct Vaccination {
 }
 
 impl Vaccination {
-    pub fn expand_values(&self) -> Self {
-        let mut expanded = self.clone();
-        expanded.tg = lookup_value(&expanded.tg);
-        expanded.vp = lookup_value(&expanded.vp);
-        expanded.mp = lookup_value(&expanded.mp);
-        expanded.ma = lookup_value(&expanded.ma);
-        expanded.co = lookup_value(&expanded.co);
-        expanded
+    pub fn expand_values(&mut self) {
+        self.tg = lookup_value(&self.tg);
+        self.vp = lookup_value(&self.vp);
+        self.mp = lookup_value(&self.mp);
+        self.ma = lookup_value(&self.ma);
+        self.co = lookup_value(&self.co);
     }
 }
