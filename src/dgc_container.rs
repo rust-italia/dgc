@@ -17,13 +17,20 @@ pub struct DgcCertContainer {
     pub issuer: String,
     #[serde(alias = "6")]
     #[serde(rename(serialize = "6"))]
-    pub issued_at: u64,
+    pub issued_at: IntegerOrFloat,
     #[serde(alias = "4")]
     #[serde(rename(serialize = "4"))]
-    pub expiration_time: u64,
+    pub expiration_time: IntegerOrFloat,
     #[serde(alias = "-260")]
     #[serde(rename(serialize = "-260"))]
     pub certs: HashMap<usize, DgcCert>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IntegerOrFloat {
+    Float(f64),
+    Integer(u64),
 }
 
 impl DgcCertContainer {
