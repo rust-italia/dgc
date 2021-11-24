@@ -75,8 +75,8 @@ fn remove_prefix(data: &'_ str) -> Result<&'_ str, ParseError> {
     }
 
     // check HC1: header
-    if &data[0..4] != "HC1:" {
-        return Err(ParseError::InvalidPrefix(String::from(&data[0..3])));
+    if !data.starts_with("HC1:") {
+        return Err(ParseError::InvalidPrefix(data.chars().take(4).collect()));
     }
 
     Ok(&data[4..])
