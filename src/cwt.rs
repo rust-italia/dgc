@@ -7,6 +7,7 @@ use std::convert::{TryFrom, TryInto};
 use thiserror::Error;
 
 const COSE_SIGN1_CBOR_TAG: u64 = 18;
+const CBOR_WEB_TOKEN_TAG: u64 = 61;
 const COSE_HEADER_KEY_KID: i128 = 4;
 const COSE_HEADER_KEY_ALG: i128 = 1;
 const COSE_ECDSA256: i128 = -7;
@@ -157,12 +158,19 @@ impl TryFrom<&[u8]> for Cwt {
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         use CwtParseError::*;
 
-        let cwt: Value = ciborium::de::from_reader(data)?;
-        let (tag_id, cwt_content) = cwt.as_tag().ok_or(InvalidRootValue)?;
-        if tag_id != COSE_SIGN1_CBOR_TAG {
-            return Err(InvalidTag(tag_id));
-        }
-        let parts = cwt_content.as_array().ok_or(InvalidParts)?;
+        let cwt_content = match ciborium::de::from_reader(data)? {
+            Value::Tag(tag_id, content) if tag_id == CBOR_WEB_TOKEN_TAG => *content,
+            cwt => cwt,
+        };
+        let cwt_content = match cwt_content {
+            Value::Tag(COSE_SIGN1_CBOR_TAG, content) => *content,
+            Value::Tag(tag_id, _) => return Err(InvalidTag(tag_id)),
+            cwt => cwt,
+        };
+        let parts = match cwt_content {
+            Value::Array(parts) => parts,
+            _ => return Err(InvalidParts),
+        };
         if parts.len() != 4 {
             return Err(InvalidPartsCount(parts.len()));
         }
