@@ -1,6 +1,6 @@
 use crate::{Cwt, CwtParseError, DgcCertContainer, EcAlg, TrustList};
 use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
-use std::convert::TryInto;
+use std::{convert::TryInto, fmt::Display};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -26,6 +26,40 @@ pub enum SignatureValidity {
     SignatureMalformed,
     UnsupportedSigningAlgorithm(String),
     KeyNotInTrustList(Vec<u8>),
+}
+
+impl Display for SignatureValidity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use SignatureValidity::*;
+        match self {
+            Valid => write!(f, "Valid Signature"),
+            Invalid => write!(f, "Invalid Signature"),
+            MissingKid => write!(f, "The certificate did not specify a Key Id (kid)"),
+            MissingSigningAlgorithm => {
+                write!(
+                    f,
+                    "The certificate did not specify a signing algorithm (alg)"
+                )
+            }
+            SignatureMalformed => {
+                write!(f, "The signature bytes are malformed")
+            }
+            UnsupportedSigningAlgorithm(alg) => {
+                write!(
+                    f,
+                    "The signature algorithm '{}' is not supported by this library",
+                    alg
+                )
+            }
+            KeyNotInTrustList(kid) => {
+                write!(
+                    f,
+                    "The public key '{}' was not found in the given trustlist",
+                    base64::encode(kid)
+                )
+            }
+        }
+    }
 }
 
 impl SignatureValidity {
