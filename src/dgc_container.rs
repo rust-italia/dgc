@@ -28,10 +28,7 @@ pub struct DgcCertContainer {
 
 impl DgcCertContainer {
     pub fn expand_values(&mut self) {
-        self
-            .certs
-            .iter_mut()
-            .for_each(|(_, t)| t.expand_values());
+        self.certs.iter_mut().for_each(|(_, t)| t.expand_values());
     }
 }
 
