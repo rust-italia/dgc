@@ -1,9 +1,9 @@
 # dgc
 
-<img src="https://github.com/lmammino/dgc/raw/main/dgc-rust-logo.svg" alt="DGC rust library logo" width="300">
+<img src="https://github.com/rust-italia/dgc/raw/main/dgc-rust-logo.svg" alt="DGC rust library logo" width="300">
 
-[![Test](https://github.com/lmammino/dgc/actions/workflows/Test.yml/badge.svg)](https://github.com/lmammino/dgc/actions/workflows/Test.yml)
-[![codecov](https://codecov.io/gh/lmammino/dgc/branch/main/graph/badge.svg?token=4CNbvgaDc1)](https://codecov.io/gh/lmammino/dgc)
+[![Test](https://github.com/rust-italia/dgc/actions/workflows/Test.yml/badge.svg)](https://github.com/rust-italia/dgc/actions/workflows/Test.yml)
+[![codecov](https://codecov.io/gh/rust-italia/dgc/branch/main/graph/badge.svg?token=4CNbvgaDc1)](https://codecov.io/gh/rust-italia/dgc)
 [![crates.io badge](https://img.shields.io/crates/v/dgc.svg)](https://crates.io/crates/dgc)
 [![Documentation](https://docs.rs/dgc/badge.svg)](https://docs.rs/dgc)
 
@@ -21,8 +21,8 @@ A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpa
 
 Current limitations:
 
-  - It only supports EC signatures (see [#2](https://github.com/lmammino/dgc/issues/2))
-  - It does not support KID in the COSE unprotected header (see [#1](https://github.com/lmammino/dgc/issues/1))
+  - It only supports EC signatures (see [#2](https://github.com/rust-italia/dgc/issues/2))
+  - It does not support KID in the COSE unprotected header (see [#1](https://github.com/rust-italia/dgc/issues/1))
 
 
 ## Usage
@@ -80,7 +80,7 @@ match signature_validity {
 
 ### Other examples?
 
-To get started using `dgc`, see the [`examples`](https://github.com/lmammino/dgc/tree/main/examples) or the [docs](https://docs.rs/dgc).
+To get started using `dgc`, see the [`examples`](https://github.com/rust-italia/dgc/tree/main/examples) or the [docs](https://docs.rs/dgc).
 
 If you clone the repository locally, you can easily run the example files with:
 
@@ -93,7 +93,7 @@ cargo run --example <name of example file>
 
 Everyone is very welcome to contribute to this project.
 You can contribute just by submitting bugs or suggesting improvements by
-[opening an issue on GitHub](https://github.com/lmammino/dgc/issues).
+[opening an issue on GitHub](https://github.com/rust-italia/dgc/issues).
 
 
 ## License

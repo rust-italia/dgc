@@ -6,7 +6,7 @@ edition = "2018"
 description = "A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass"
 keywords = ["dgc", "greenpass", "certificate", "cose", "health"]
 categories = ["encoding", "data-structures", "cryptography"]
-repository = "https://github.com/lmammino/dgc"
+repository = "https://github.com/rust-italia/dgc"
 readme = "README.md"
 license = "MIT"
 
