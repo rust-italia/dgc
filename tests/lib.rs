@@ -20,13 +20,13 @@ use std::path::PathBuf;
 #[case::common_2dcode_raw_co16_json("common/2DCode/raw/CO16.json")]
 #[case::common_2dcode_raw_co17_json("common/2DCode/raw/CO17.json")]
 #[case::common_2dcode_raw_co18_json("common/2DCode/raw/CO18.json")]
-// #[case::common_2dcode_raw_co19_json("common/2DCode/raw/CO19.json")] // SKIPPED: issue #1
+// #[case::common_2dcode_raw_co19_json("common/2DCode/raw/CO19.json")] // SKIPPED. Kid in unprotected header. See #1
 #[case::common_2dcode_raw_co2_json("common/2DCode/raw/CO2.json")]
-// #[case::common_2dcode_raw_co20_json("common/2DCode/raw/CO20.json")] // SKIPPED: issue #1
+// #[case::common_2dcode_raw_co20_json("common/2DCode/raw/CO20.json")] // SKIPPED. Kid in unprotected header. See #1
 #[case::common_2dcode_raw_co21_json("common/2DCode/raw/CO21.json")]
 #[case::common_2dcode_raw_co22_json("common/2DCode/raw/CO22.json")]
 #[case::common_2dcode_raw_co23_json("common/2DCode/raw/CO23.json")]
-// #[case::common_2dcode_raw_co28_json("common/2DCode/raw/CO28.json")] // SKIPPED: flaked test. It says it should verify fine but it's not a valid CWT (invalid tag)
+// #[case::common_2dcode_raw_co28_json("common/2DCode/raw/CO28.json")] // SKIPPED: invalid/missing cose tag. See #22
 #[case::common_2dcode_raw_co3_json("common/2DCode/raw/CO3.json")]
 #[case::common_2dcode_raw_co5_json("common/2DCode/raw/CO5.json")]
 #[case::common_2dcode_raw_co6_json("common/2DCode/raw/CO6.json")]
@@ -92,27 +92,27 @@ use std::path::PathBuf;
 #[case::dk_2dcode_raw_5_json("DK/2DCode/raw/5.json")]
 #[case::dk_2dcode_raw_7_json("DK/2DCode/raw/7.json")]
 #[case::dk_2dcode_raw_8_json("DK/2DCode/raw/8.json")]
-// #[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")] // SKIPPED. `issued_at` is a float (see #3)
+// #[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")] // SKIPPED. RSA signature. See #2
+// #[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")] // SKIPPED. RSA signature. See #2
+// #[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")] // SKIPPED. RSA signature. See #2
 #[case::es_2dcode_raw_101_json("ES/2DCode/raw/101.json")]
 #[case::es_2dcode_raw_102_json("ES/2DCode/raw/102.json")]
 #[case::es_2dcode_raw_103_json("ES/2DCode/raw/103.json")]
 #[case::es_2dcode_raw_1101_json("ES/2DCode/raw/1101.json")]
 #[case::es_2dcode_raw_1102_json("ES/2DCode/raw/1102.json")]
 #[case::es_2dcode_raw_1103_json("ES/2DCode/raw/1103.json")]
-// #[case::es_2dcode_raw_1501_json("ES/2DCode/raw/1501.json")] // SKIPPED. Invalid COSE (missing tag)
-// #[case::es_2dcode_raw_1502_json("ES/2DCode/raw/1502.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_1503_json("ES/2DCode/raw/1503.json")] // SKIPPED. `issued_at` is a float (see #3)
+// #[case::es_2dcode_raw_1501_json("ES/2DCode/raw/1501.json")] // SKIPPED: invalid/missing cose tag. See #22
+// #[case::es_2dcode_raw_1502_json("ES/2DCode/raw/1502.json")] // SKIPPED: invalid/missing cose tag. See #22
+// #[case::es_2dcode_raw_1503_json("ES/2DCode/raw/1503.json")] // SKIPPED: invalid/missing cose tag. See #22
 #[case::es_2dcode_raw_201_json("ES/2DCode/raw/201.json")]
 #[case::es_2dcode_raw_202_json("ES/2DCode/raw/202.json")]
 #[case::es_2dcode_raw_203_json("ES/2DCode/raw/203.json")]
 #[case::es_2dcode_raw_2101_json("ES/2DCode/raw/2101.json")]
 #[case::es_2dcode_raw_2102_json("ES/2DCode/raw/2102.json")]
 #[case::es_2dcode_raw_2103_json("ES/2DCode/raw/2103.json")]
-// #[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")] // SKIPPED. `issued_at` is a float (see #3)
-// #[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")] // SKIPPED. `issued_at` is a float (see #3)
+// #[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")] // SKIPPED. RSA signature. See #2
+// #[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")] // SKIPPED. RSA signature. See #2
+// #[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")] // SKIPPED. RSA signature. See #2
 #[case::es_2dcode_raw_501_json("ES/2DCode/raw/501.json")]
 #[case::es_2dcode_raw_502_json("ES/2DCode/raw/502.json")]
 #[case::es_2dcode_raw_503_json("ES/2DCode/raw/503.json")]
@@ -209,7 +209,7 @@ use std::path::PathBuf;
 // #[case::lv_2dcode_raw_1_json("LV/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
 // #[case::lv_2dcode_raw_2_json("LV/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
 // #[case::lv_2dcode_raw_3_json("LV/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::nl_2dcode_raw_000_nl_test_json("NL/2DCode/raw/000-NL-test.json")]
+#[case::nl_2dcode_raw_000_nl_test_json("NL/2DCode/raw/000-NL-test.json")]
 #[case::nl_2dcode_raw_001_nl_test_json("NL/2DCode/raw/001-NL-test.json")]
 #[case::nl_2dcode_raw_002_nl_test_json("NL/2DCode/raw/002-NL-test.json")]
 #[case::nl_2dcode_raw_003_nl_test_json("NL/2DCode/raw/003-NL-test.json")]
@@ -671,6 +671,7 @@ fn test_case(#[case] test_file: &str) {
 
         // if the key is RSA skip the test (only EC supported)
         let testctx_description = test_data["TESTCTX"]["DESCRIPTION"].as_str().unwrap_or("");
+        // TODO: change this once RSA is supported (see #2)
         if testctx_description.contains("RSA") {
             assert!(matches!(
                 add_key_result,
