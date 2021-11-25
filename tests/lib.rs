@@ -558,35 +558,35 @@ use std::path::PathBuf;
 #[case::se_2dcode_raw_3_json("SE/2DCode/raw/3.json")]
 #[case::se_2dcode_raw_4_json("SE/2DCode/raw/4.json")]
 #[case::se_2dcode_raw_5_json("SE/2DCode/raw/5.json")]
-// #[case::sg_2dcode_raw_1_json("SG/2DCode/raw/1.json")]
-// #[case::sg_2dcode_raw_2_json("SG/2DCode/raw/2.json")]
-// #[case::sg_2dcode_raw_3_json("SG/2DCode/raw/3.json")]
-// #[case::si_2dcode_raw_rec_json("SI/2DCode/raw/REC.json")]
-// #[case::si_2dcode_raw_test_ag_json("SI/2DCode/raw/test-AG.json")]
-// #[case::si_2dcode_raw_test_pcr_json("SI/2DCode/raw/test-PCR.json")]
-// #[case::si_2dcode_raw_vac_json("SI/2DCode/raw/VAC.json")]
-// #[case::sk_2dcode_raw_1_json("SK/2DCode/raw/1.json")]
-// #[case::sk_2dcode_raw_2_json("SK/2DCode/raw/2.json")]
-// #[case::sk_2dcode_raw_3_json("SK/2DCode/raw/3.json")]
-// #[case::sk_2dcode_raw_4_json("SK/2DCode/raw/4.json")]
-// #[case::sk_2dcode_raw_5_json("SK/2DCode/raw/5.json")]
-// #[case::sk_2dcode_raw_6_json("SK/2DCode/raw/6.json")]
-// #[case::sk_2dcode_raw_7_json("SK/2DCode/raw/7.json")]
-// #[case::sk_2dcode_raw_8_json("SK/2DCode/raw/8.json")]
-// #[case::sm_2dcode_raw_1_json("SM/2DCode/raw/1.json")]
-// #[case::sm_2dcode_raw_2_json("SM/2DCode/raw/2.json")]
-// #[case::sm_2dcode_raw_3_json("SM/2DCode/raw/3.json")]
-// #[case::sm_2dcode_raw_4_json("SM/2DCode/raw/4.json")]
-// #[case::sm_2dcode_raw_5_json("SM/2DCode/raw/5.json")]
-// #[case::sm_2dcode_raw_6_json("SM/2DCode/raw/6.json")]
-// #[case::ua_2dcode_raw_1_json("UA/2DCode/raw/1.json")]
-// #[case::ua_2dcode_raw_2_json("UA/2DCode/raw/2.json")]
-// #[case::ua_2dcode_raw_3_json("UA/2DCode/raw/3.json")]
-// #[case::ua_2dcode_raw_4_json("UA/2DCode/raw/4.json")]
-// #[case::ua_2dcode_raw_5_json("UA/2DCode/raw/5.json")]
-// #[case::va_2dcode_raw_1_json("VA/2DCode/raw/1.json")]
-// #[case::va_2dcode_raw_2_json("VA/2DCode/raw/2.json")]
-// #[case::va_2dcode_raw_3_json("VA/2DCode/raw/3.json")]
+// #[case::sg_2dcode_raw_1_json("SG/2DCode/raw/1.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
+// #[case::sg_2dcode_raw_2_json("SG/2DCode/raw/2.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
+// #[case::sg_2dcode_raw_3_json("SG/2DCode/raw/3.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
+#[case::si_2dcode_raw_rec_json("SI/2DCode/raw/REC.json")]
+#[case::si_2dcode_raw_test_ag_json("SI/2DCode/raw/test-AG.json")]
+#[case::si_2dcode_raw_test_pcr_json("SI/2DCode/raw/test-PCR.json")]
+#[case::si_2dcode_raw_vac_json("SI/2DCode/raw/VAC.json")]
+#[case::sk_2dcode_raw_1_json("SK/2DCode/raw/1.json")]
+#[case::sk_2dcode_raw_2_json("SK/2DCode/raw/2.json")]
+#[case::sk_2dcode_raw_3_json("SK/2DCode/raw/3.json")]
+#[case::sk_2dcode_raw_4_json("SK/2DCode/raw/4.json")]
+#[case::sk_2dcode_raw_5_json("SK/2DCode/raw/5.json")]
+#[case::sk_2dcode_raw_6_json("SK/2DCode/raw/6.json")]
+#[case::sk_2dcode_raw_7_json("SK/2DCode/raw/7.json")]
+#[case::sk_2dcode_raw_8_json("SK/2DCode/raw/8.json")]
+// #[case::sm_2dcode_raw_1_json("SM/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
+// #[case::sm_2dcode_raw_2_json("SM/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
+// #[case::sm_2dcode_raw_3_json("SM/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
+// #[case::sm_2dcode_raw_4_json("SM/2DCode/raw/4.json")] // SKIPPED. Kid in unprotected header. See #1
+// #[case::sm_2dcode_raw_5_json("SM/2DCode/raw/5.json")] // SKIPPED. Kid in unprotected header. See #1
+// #[case::sm_2dcode_raw_6_json("SM/2DCode/raw/6.json")] // SKIPPED. Kid in unprotected header. See #1
+#[case::ua_2dcode_raw_1_json("UA/2DCode/raw/1.json")]
+#[case::ua_2dcode_raw_2_json("UA/2DCode/raw/2.json")]
+#[case::ua_2dcode_raw_3_json("UA/2DCode/raw/3.json")]
+#[case::ua_2dcode_raw_4_json("UA/2DCode/raw/4.json")]
+#[case::ua_2dcode_raw_5_json("UA/2DCode/raw/5.json")]
+#[case::va_2dcode_raw_1_json("VA/2DCode/raw/1.json")]
+#[case::va_2dcode_raw_2_json("VA/2DCode/raw/2.json")]
+#[case::va_2dcode_raw_3_json("VA/2DCode/raw/3.json")]
 fn test_case(#[case] test_file: &str) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("tests");
