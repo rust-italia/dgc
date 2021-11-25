@@ -6,6 +6,7 @@
 [![codecov](https://codecov.io/gh/rust-italia/dgc/branch/main/graph/badge.svg?token=4CNbvgaDc1)](https://codecov.io/gh/rust-italia/dgc)
 [![crates.io badge](https://img.shields.io/crates/v/dgc.svg)](https://crates.io/crates/dgc)
 [![Documentation](https://docs.rs/dgc/badge.svg)](https://docs.rs/dgc)
+[![dependency status](https://deps.rs/repo/github/rust-italia/dgc/status.svg)](https://deps.rs/repo/github/rust-italia/dgc)
 
 A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass 📲✅
 
