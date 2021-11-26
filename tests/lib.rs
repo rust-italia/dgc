@@ -20,13 +20,16 @@ use std::path::PathBuf;
 #[case::common_2dcode_raw_co16_json("common/2DCode/raw/CO16.json")]
 #[case::common_2dcode_raw_co17_json("common/2DCode/raw/CO17.json")]
 #[case::common_2dcode_raw_co18_json("common/2DCode/raw/CO18.json")]
-// #[case::common_2dcode_raw_co19_json("common/2DCode/raw/CO19.json")] // SKIPPED. Kid in unprotected header. See #1
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::common_2dcode_raw_co19_json("common/2DCode/raw/CO19.json")]
 #[case::common_2dcode_raw_co2_json("common/2DCode/raw/CO2.json")]
-// #[case::common_2dcode_raw_co20_json("common/2DCode/raw/CO20.json")] // SKIPPED. Kid in unprotected header. See #1
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::common_2dcode_raw_co20_json("common/2DCode/raw/CO20.json")]
 #[case::common_2dcode_raw_co21_json("common/2DCode/raw/CO21.json")]
 #[case::common_2dcode_raw_co22_json("common/2DCode/raw/CO22.json")]
 #[case::common_2dcode_raw_co23_json("common/2DCode/raw/CO23.json")]
-// #[case::common_2dcode_raw_co28_json("common/2DCode/raw/CO28.json")] // SKIPPED: invalid/missing cose tag. See #22
+#[ignore = "SKIPPED: invalid/missing cose tag. See #22"]
+#[case::common_2dcode_raw_co28_json("common/2DCode/raw/CO28.json")]
 #[case::common_2dcode_raw_co3_json("common/2DCode/raw/CO3.json")]
 #[case::common_2dcode_raw_co5_json("common/2DCode/raw/CO5.json")]
 #[case::common_2dcode_raw_co6_json("common/2DCode/raw/CO6.json")]
@@ -56,32 +59,54 @@ use std::path::PathBuf;
 #[case::be_2dcode_raw_3_json("BE/2DCode/raw/3.json")]
 #[case::be_2dcode_raw_4_json("BE/2DCode/raw/4.json")]
 #[case::be_2dcode_raw_5_json("BE/2DCode/raw/5.json")]
-// #[case::bg_2dcode_raw_1_json("BG/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::bg_2dcode_raw_2_json("BG/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::bg_2dcode_raw_3_json("BG/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::bg_2dcode_raw_4_json("BG/2DCode/raw/4.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::bg_2dcode_raw_5_json("BG/2DCode/raw/5.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::ch_2dcode_raw_1_json("CH/2DCode/raw/1.json")] // SKIPPED. RSA signature. See #2
-// #[case::ch_2dcode_raw_2_json("CH/2DCode/raw/2.json")] // SKIPPED. RSA signature. See #2
-// #[case::ch_2dcode_raw_3_json("CH/2DCode/raw/3.json")] // SKIPPED. RSA signature. See #2
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::bg_2dcode_raw_1_json("BG/2DCode/raw/1.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::bg_2dcode_raw_2_json("BG/2DCode/raw/2.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::bg_2dcode_raw_3_json("BG/2DCode/raw/3.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::bg_2dcode_raw_4_json("BG/2DCode/raw/4.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::bg_2dcode_raw_5_json("BG/2DCode/raw/5.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::ch_2dcode_raw_1_json("CH/2DCode/raw/1.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::ch_2dcode_raw_2_json("CH/2DCode/raw/2.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::ch_2dcode_raw_3_json("CH/2DCode/raw/3.json")]
 #[case::cy_2dcode_raw_5_json("CY/2DCode/raw/5.json")]
 #[case::cy_2dcode_raw_6_json("CY/2DCode/raw/6.json")]
 #[case::cy_2dcode_raw_7_json("CY/2DCode/raw/7.json")]
 #[case::cy_2dcode_raw_8_json("CY/2DCode/raw/8.json")]
-// #[case::cz_2dcode_raw_1_json("CZ/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_11_json("CZ/2DCode/raw/11.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_12_json("CZ/2DCode/raw/12.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_13_json("CZ/2DCode/raw/13.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_14_json("CZ/2DCode/raw/14.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_15_json("CZ/2DCode/raw/15.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_2_json("CZ/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_3_json("CZ/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_4_json("CZ/2DCode/raw/4.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::cz_2dcode_raw_5_json("CZ/2DCode/raw/5.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::de_2dcode_raw_1_json("DE/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::de_2dcode_raw_2_json("DE/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::de_2dcode_raw_3_json("DE/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::de_2dcode_raw_4_json("DE/2DCode/raw/4.json")] // SKIPPED. Kid in unprotected header. See #1
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_1_json("CZ/2DCode/raw/1.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_11_json("CZ/2DCode/raw/11.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_12_json("CZ/2DCode/raw/12.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_13_json("CZ/2DCode/raw/13.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_14_json("CZ/2DCode/raw/14.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_15_json("CZ/2DCode/raw/15.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_2_json("CZ/2DCode/raw/2.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_3_json("CZ/2DCode/raw/3.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_4_json("CZ/2DCode/raw/4.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::cz_2dcode_raw_5_json("CZ/2DCode/raw/5.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::de_2dcode_raw_1_json("DE/2DCode/raw/1.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::de_2dcode_raw_2_json("DE/2DCode/raw/2.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::de_2dcode_raw_3_json("DE/2DCode/raw/3.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::de_2dcode_raw_4_json("DE/2DCode/raw/4.json")]
 #[case::dk_2dcode_raw_1_json("DK/2DCode/raw/1.json")]
 #[case::dk_2dcode_raw_10_json("DK/2DCode/raw/10.json")]
 #[case::dk_2dcode_raw_11_json("DK/2DCode/raw/11.json")]
@@ -92,27 +117,36 @@ use std::path::PathBuf;
 #[case::dk_2dcode_raw_5_json("DK/2DCode/raw/5.json")]
 #[case::dk_2dcode_raw_7_json("DK/2DCode/raw/7.json")]
 #[case::dk_2dcode_raw_8_json("DK/2DCode/raw/8.json")]
-// #[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")] // SKIPPED. RSA signature. See #2
-// #[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")] // SKIPPED. RSA signature. See #2
-// #[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")] // SKIPPED. RSA signature. See #2
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")]
 #[case::es_2dcode_raw_101_json("ES/2DCode/raw/101.json")]
 #[case::es_2dcode_raw_102_json("ES/2DCode/raw/102.json")]
 #[case::es_2dcode_raw_103_json("ES/2DCode/raw/103.json")]
 #[case::es_2dcode_raw_1101_json("ES/2DCode/raw/1101.json")]
 #[case::es_2dcode_raw_1102_json("ES/2DCode/raw/1102.json")]
 #[case::es_2dcode_raw_1103_json("ES/2DCode/raw/1103.json")]
-// #[case::es_2dcode_raw_1501_json("ES/2DCode/raw/1501.json")] // SKIPPED: invalid/missing cose tag. See #22
-// #[case::es_2dcode_raw_1502_json("ES/2DCode/raw/1502.json")] // SKIPPED: invalid/missing cose tag. See #22
-// #[case::es_2dcode_raw_1503_json("ES/2DCode/raw/1503.json")] // SKIPPED: invalid/missing cose tag. See #22
+#[ignore = "invalid/missing cose tag. See #22"]
+#[case::es_2dcode_raw_1501_json("ES/2DCode/raw/1501.json")]
+#[ignore = "invalid/missing cose tag. See #22"]
+#[case::es_2dcode_raw_1502_json("ES/2DCode/raw/1502.json")]
+#[ignore = "invalid/missing cose tag. See #22"]
+#[case::es_2dcode_raw_1503_json("ES/2DCode/raw/1503.json")]
 #[case::es_2dcode_raw_201_json("ES/2DCode/raw/201.json")]
 #[case::es_2dcode_raw_202_json("ES/2DCode/raw/202.json")]
 #[case::es_2dcode_raw_203_json("ES/2DCode/raw/203.json")]
 #[case::es_2dcode_raw_2101_json("ES/2DCode/raw/2101.json")]
 #[case::es_2dcode_raw_2102_json("ES/2DCode/raw/2102.json")]
 #[case::es_2dcode_raw_2103_json("ES/2DCode/raw/2103.json")]
-// #[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")] // SKIPPED. RSA signature. See #2
-// #[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")] // SKIPPED. RSA signature. See #2
-// #[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")] // SKIPPED. RSA signature. See #2
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")]
 #[case::es_2dcode_raw_501_json("ES/2DCode/raw/501.json")]
 #[case::es_2dcode_raw_502_json("ES/2DCode/raw/502.json")]
 #[case::es_2dcode_raw_503_json("ES/2DCode/raw/503.json")]
@@ -164,7 +198,8 @@ use std::path::PathBuf;
 #[case::fr_2dcode_raw_dgc_qrcode_00017_raw_json("FR/2DCode/raw/DGC_QrCode_00017_Raw.json")]
 #[case::fr_2dcode_raw_dgc_qrcode_00018_raw_json("FR/2DCode/raw/DGC_QrCode_00018_Raw.json")]
 #[case::fr_2dcode_raw_recovery_ok_json("FR/2DCode/raw/recovery_ok.json")]
-// #[case::fr_2dcode_raw_test_pcr_ok_json("FR/2DCode/raw/test_pcr_ok.json")] // SKIPPED some dates in the given JSON seem wrong
+#[ignore = "some dates in the given JSON seem wrong"]
+#[case::fr_2dcode_raw_test_pcr_ok_json("FR/2DCode/raw/test_pcr_ok.json")]
 #[case::fr_2dcode_raw_vaccin_ok_json("FR/2DCode/raw/vaccin_ok.json")]
 #[case::ge_2dcode_raw_1_json("GE/2DCode/raw/1.json")]
 #[case::ge_2dcode_raw_2_json("GE/2DCode/raw/2.json")]
@@ -198,17 +233,24 @@ use std::path::PathBuf;
 #[case::li_2dcode_raw_2_json("LI/2DCode/raw/2.json")]
 #[case::li_2dcode_raw_3_json("LI/2DCode/raw/3.json")]
 #[case::li_2dcode_raw_4_json("LI/2DCode/raw/4.json")]
-// #[case::lt_2dcode_raw_1_json("LT/2DCode/raw/1.json")] // SKIPPED. RSA signature. See #2
-// #[case::lt_2dcode_raw_2_json("LT/2DCode/raw/2.json")] // SKIPPED. RSA signature. See #2
-// #[case::lt_2dcode_raw_3_json("LT/2DCode/raw/3.json")] // SKIPPED. RSA signature. See #2
-// #[case::lt_2dcode_raw_4_json("LT/2DCode/raw/4.json")] // SKIPPED. RSA signature. See #2
+#[ignore = "RSA signature. See #2"]
+#[case::lt_2dcode_raw_1_json("LT/2DCode/raw/1.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::lt_2dcode_raw_2_json("LT/2DCode/raw/2.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::lt_2dcode_raw_3_json("LT/2DCode/raw/3.json")]
+#[ignore = "RSA signature. See #2"]
+#[case::lt_2dcode_raw_4_json("LT/2DCode/raw/4.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_naat_json("LU/2DCode/raw/INCERT_R_DCC_NAAT.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_rat_json("LU/2DCode/raw/INCERT_R_DCC_RAT.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_recovery_json("LU/2DCode/raw/INCERT_R_DCC_Recovery.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_vaccination_json("LU/2DCode/raw/INCERT_R_DCC_Vaccination.json")]
-// #[case::lv_2dcode_raw_1_json("LV/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::lv_2dcode_raw_2_json("LV/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::lv_2dcode_raw_3_json("LV/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::lv_2dcode_raw_1_json("LV/2DCode/raw/1.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::lv_2dcode_raw_2_json("LV/2DCode/raw/2.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::lv_2dcode_raw_3_json("LV/2DCode/raw/3.json")]
 #[case::nl_2dcode_raw_000_nl_test_json("NL/2DCode/raw/000-NL-test.json")]
 #[case::nl_2dcode_raw_001_nl_test_json("NL/2DCode/raw/001-NL-test.json")]
 #[case::nl_2dcode_raw_002_nl_test_json("NL/2DCode/raw/002-NL-test.json")]
@@ -547,7 +589,8 @@ use std::path::PathBuf;
 #[case::pt_1_3_0_2dcode_raw_1_json("PT/1.3.0/2DCode/raw/1.json")]
 #[case::pt_1_3_0_2dcode_raw_2_json("PT/1.3.0/2DCode/raw/2.json")]
 #[case::pt_1_3_0_2dcode_raw_3_json("PT/1.3.0/2DCode/raw/3.json")]
-// #[case::pt_1_3_0_2dcode_raw_4_json("PT/1.3.0/2DCode/raw/4.json")] // SKIPPED. Weird difference in date field (`sc`). Expected "2021-06-30T12:34:56+00:00", found: "2021-06-30T12:34:56Z".
+#[ignore = "Weird difference in date field (`sc`). Expected '2021-06-30T12:34:56+00:00', found: '2021-06-30T12:34:56Z'."]
+#[case::pt_1_3_0_2dcode_raw_4_json("PT/1.3.0/2DCode/raw/4.json")]
 #[case::pt_1_3_0_2dcode_raw_5_json("PT/1.3.0/2DCode/raw/5.json")]
 #[case::ro_2dcode_raw_1_json("RO/2DCode/raw/1.json")]
 #[case::ro_2dcode_raw_2_json("RO/2DCode/raw/2.json")]
@@ -558,9 +601,12 @@ use std::path::PathBuf;
 #[case::se_2dcode_raw_3_json("SE/2DCode/raw/3.json")]
 #[case::se_2dcode_raw_4_json("SE/2DCode/raw/4.json")]
 #[case::se_2dcode_raw_5_json("SE/2DCode/raw/5.json")]
-// #[case::sg_2dcode_raw_1_json("SG/2DCode/raw/1.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
-// #[case::sg_2dcode_raw_2_json("SG/2DCode/raw/2.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
-// #[case::sg_2dcode_raw_3_json("SG/2DCode/raw/3.json")] // SKIPPED. Name section does not have the `fn` field. Should we make that an `Option`?
+#[ignore = "Name section does not have the `fn` field. Should we make that an `Option`?"]
+#[case::sg_2dcode_raw_1_json("SG/2DCode/raw/1.json")]
+#[ignore = "Name section does not have the `fn` field. Should we make that an `Option`?"]
+#[case::sg_2dcode_raw_2_json("SG/2DCode/raw/2.json")]
+#[ignore = "Name section does not have the `fn` field. Should we make that an `Option`?"]
+#[case::sg_2dcode_raw_3_json("SG/2DCode/raw/3.json")]
 #[case::si_2dcode_raw_rec_json("SI/2DCode/raw/REC.json")]
 #[case::si_2dcode_raw_test_ag_json("SI/2DCode/raw/test-AG.json")]
 #[case::si_2dcode_raw_test_pcr_json("SI/2DCode/raw/test-PCR.json")]
@@ -573,12 +619,18 @@ use std::path::PathBuf;
 #[case::sk_2dcode_raw_6_json("SK/2DCode/raw/6.json")]
 #[case::sk_2dcode_raw_7_json("SK/2DCode/raw/7.json")]
 #[case::sk_2dcode_raw_8_json("SK/2DCode/raw/8.json")]
-// #[case::sm_2dcode_raw_1_json("SM/2DCode/raw/1.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::sm_2dcode_raw_2_json("SM/2DCode/raw/2.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::sm_2dcode_raw_3_json("SM/2DCode/raw/3.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::sm_2dcode_raw_4_json("SM/2DCode/raw/4.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::sm_2dcode_raw_5_json("SM/2DCode/raw/5.json")] // SKIPPED. Kid in unprotected header. See #1
-// #[case::sm_2dcode_raw_6_json("SM/2DCode/raw/6.json")] // SKIPPED. Kid in unprotected header. See #1
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_1_json("SM/2DCode/raw/1.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_2_json("SM/2DCode/raw/2.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_3_json("SM/2DCode/raw/3.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_4_json("SM/2DCode/raw/4.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_5_json("SM/2DCode/raw/5.json")]
+#[ignore = "Kid in unprotected header. See #1"]
+#[case::sm_2dcode_raw_6_json("SM/2DCode/raw/6.json")]
 #[case::ua_2dcode_raw_1_json("UA/2DCode/raw/1.json")]
 #[case::ua_2dcode_raw_2_json("UA/2DCode/raw/2.json")]
 #[case::ua_2dcode_raw_3_json("UA/2DCode/raw/3.json")]
