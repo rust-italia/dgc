@@ -13,25 +13,10 @@ pub struct DgcCertName {
     pub fnt: String,
 }
 
-fn t_empty_if_null<'de, D>(deserializer: D) -> Result<Vec<Test>, D::Error>
+fn empty_if_null<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     D: Deserializer<'de>,
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
-
-fn v_empty_if_null<'de, D>(deserializer: D) -> Result<Vec<Vaccination>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or_default())
-}
-
-fn r_empty_if_null<'de, D>(deserializer: D) -> Result<Vec<Recovery>, D::Error>
-where
-    D: Deserializer<'de>,
+    T: Deserialize<'de>,
 {
     let opt = Option::deserialize(deserializer)?;
     Ok(opt.unwrap_or_default())
@@ -45,19 +30,19 @@ pub struct DgcCert {
     #[serde(
         default,
         skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "t_empty_if_null"
+        deserialize_with = "empty_if_null"
     )]
     pub t: Vec<Test>,
     #[serde(
         default,
         skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "v_empty_if_null"
+        deserialize_with = "empty_if_null"
     )]
     pub v: Vec<Vaccination>,
     #[serde(
         default,
         skip_serializing_if = "Vec::is_empty",
-        deserialize_with = "r_empty_if_null"
+        deserialize_with = "empty_if_null"
     )]
     pub r: Vec<Recovery>,
 }
