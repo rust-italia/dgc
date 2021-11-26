@@ -95,7 +95,6 @@ impl<'a> FromIterator<&'a (Value, Value)> for CwtHeader {
                 if k == COSE_HEADER_KEY_KID {
                     // found kid
                     if let Some(kid) = val.as_bytes() {
-                        println!("{:?}", kid);
                         header.kid(kid.clone());
                     }
                 } else if k == COSE_HEADER_KEY_ALG {
