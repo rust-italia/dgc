@@ -27,12 +27,14 @@ pub enum CwtParseError {
     InvalidParts,
     #[error("The main CBOR array does not contain 4 parts. {0} parts found")]
     InvalidPartsCount(usize),
-    #[error("The header section is not a binary string")]
-    HeaderNotBinary,
-    #[error("The header section is not valid CBOR-encoded data")]
-    HeaderNotValidCbor,
-    #[error("The header section does not contain key-value pairs")]
-    HeaderNotMap,
+    #[error("The unprotected header section is not a CBOR map")]
+    UnProtectedHeaderNotMap,
+    #[error("The protected header section is not a binary string")]
+    ProtectedHeaderNotBinary,
+    #[error("The protected header section is not valid CBOR-encoded data")]
+    ProtectedHeaderNotValidCbor,
+    #[error("The protected header section does not contain key-value pairs")]
+    ProtectedHeaderNotMap,
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
     #[error("Cannot deserialize payload: {0}")]
@@ -113,7 +115,6 @@ impl<'a> FromIterator<&'a (Value, Value)> for CwtHeader {
 #[derive(Debug)]
 pub struct Cwt {
     header_protected_raw: Vec<u8>,
-    header_unprotected: Value,
     payload_raw: Vec<u8>,
     pub header: CwtHeader,
     pub payload: DgcCertContainer,
@@ -157,17 +158,19 @@ impl TryFrom<&[u8]> for Cwt {
         if parts.len() != 4 {
             return Err(InvalidPartsCount(parts.len()));
         }
-        let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
+        let header_protected_raw = (parts[0].as_bytes().ok_or(ProtectedHeaderNotBinary)?).clone();
 
-        let header_unprotected = parts[1].clone();
         let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
-        let unprotected_header_iter = parts[1].as_map().unwrap().iter();
+        let unprotected_header_iter = parts[1].as_map().ok_or(UnProtectedHeaderNotMap)?.iter();
         let protected_header_value =
             ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
-                .map_err(|_| HeaderNotValidCbor)?;
-        let protected_header_iter = protected_header_value.as_map().ok_or(HeaderNotMap)?.iter();
+                .map_err(|_| ProtectedHeaderNotValidCbor)?;
+        let protected_header_iter = protected_header_value
+            .as_map()
+            .ok_or(ProtectedHeaderNotMap)?
+            .iter();
         // Take data from unprotected header first, then from the protected one
         let header: CwtHeader = unprotected_header_iter
             .chain(protected_header_iter)
@@ -178,7 +181,6 @@ impl TryFrom<&[u8]> for Cwt {
 
         Ok(Cwt {
             header_protected_raw,
-            header_unprotected,
             payload_raw,
             header,
             payload,
