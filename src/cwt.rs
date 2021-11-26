@@ -4,6 +4,7 @@ use ciborium::{
     value::{Integer, Value},
 };
 use std::convert::{TryFrom, TryInto};
+use std::iter::FromIterator;
 use thiserror::Error;
 
 const COSE_SIGN1_CBOR_TAG: u64 = 18;
@@ -83,17 +84,18 @@ impl CwtHeader {
     }
 }
 
-impl From<&[(Value, Value)]> for CwtHeader {
-    fn from(data: &[(Value, Value)]) -> Self {
+impl<'a> FromIterator<&'a (Value, Value)> for CwtHeader {
+    fn from_iter<T: IntoIterator<Item = &'a (Value, Value)>>(iter: T) -> Self {
         // permissive parsing. We don't want to fail if we can't decode the header
         let mut header = CwtHeader::new();
         // tries to find kid and alg and apply them to the header before returning it
-        for (key, val) in data.iter() {
+        for (key, val) in iter {
             if let Some(k) = key.as_integer() {
                 let k: i128 = k.into();
                 if k == COSE_HEADER_KEY_KID {
                     // found kid
                     if let Some(kid) = val.as_bytes() {
+                        println!("{:?}", kid);
                         header.kid(kid.clone());
                     }
                 } else if k == COSE_HEADER_KEY_ALG {
@@ -111,33 +113,15 @@ impl From<&[(Value, Value)]> for CwtHeader {
 
 #[derive(Debug)]
 pub struct Cwt {
-    pub header_protected_raw: Vec<u8>,
-    pub header_protected: CwtHeader,
-    pub header_unprotected: Value,
-    pub payload_raw: Vec<u8>,
+    header_protected_raw: Vec<u8>,
+    header_unprotected: Value,
+    payload_raw: Vec<u8>,
+    pub header: CwtHeader,
     pub payload: DgcCertContainer,
     pub signature: Vec<u8>,
 }
 
 impl Cwt {
-    pub fn new(
-        header_protected_raw: Vec<u8>,
-        header_protected: CwtHeader,
-        header_unprotected: Value,
-        payload_raw: Vec<u8>,
-        payload: DgcCertContainer,
-        signature: Vec<u8>,
-    ) -> Self {
-        Cwt {
-            header_protected_raw,
-            header_protected,
-            header_unprotected,
-            payload_raw,
-            payload,
-            signature,
-        }
-    }
-
     pub fn make_sig_structure(&self) -> Vec<u8> {
         // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
         let sig_structure_cbor = Value::Array(vec![
@@ -175,28 +159,32 @@ impl TryFrom<&[u8]> for Cwt {
             return Err(InvalidPartsCount(parts.len()));
         }
         let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
-        let header_protected: CwtHeader =
-            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
-                .map_err(|_| HeaderNotValidCbor)?
-                .as_map()
-                .ok_or(HeaderNotMap)?
-                .as_slice()
-                .into();
+
         let header_unprotected = parts[1].clone();
         let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
+        let unprotected_header_iter = parts[1].as_map().unwrap().iter();
+        let protected_header_value =
+            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
+                .map_err(|_| HeaderNotValidCbor)?;
+        let protected_header_iter = protected_header_value.as_map().ok_or(HeaderNotMap)?.iter();
+        // Take data from unprotected header first, then from the protected one
+        let header: CwtHeader = unprotected_header_iter
+            .chain(protected_header_iter)
+            .collect();
+
         let payload: DgcCertContainer =
             ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
-        Ok(Cwt::new(
+        Ok(Cwt {
             header_protected_raw,
-            header_protected,
             header_unprotected,
             payload_raw,
+            header,
             payload,
             signature,
-        ))
+        })
     }
 }
 
@@ -225,8 +213,8 @@ mod tests {
 
         let cwt: Cwt = raw_cose_data.as_slice().try_into().unwrap();
 
-        assert_eq!(Some(expected_kid), cwt.header_protected.kid);
-        assert_eq!(Some(expected_alg), cwt.header_protected.alg);
+        assert_eq!(Some(expected_kid), cwt.header.kid);
+        assert_eq!(Some(expected_alg), cwt.header.alg);
         assert_eq!(
             expected_sig_structure,
             hex::encode(cwt.make_sig_structure())

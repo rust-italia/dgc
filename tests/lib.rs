@@ -712,10 +712,8 @@ fn test_case(#[case] test_file: &str) {
     if test_data["TESTCTX"].get("CERTIFICATE").is_some() {
         let mut trustlist = TrustList::default();
 
-        let add_key_result = trustlist.add_key_from_certificate(
-            &cwt.header_protected.kid.unwrap(),
-            test_data["TESTCTX"]["CERTIFICATE"].as_str().unwrap(),
-        );
+        let add_key_result = trustlist
+            .add_key_from_certificate(test_data["TESTCTX"]["CERTIFICATE"].as_str().unwrap());
 
         // if the key is RSA skip the test (only EC supported)
         let testctx_description = test_data["TESTCTX"]["DESCRIPTION"].as_str().unwrap_or("");
