@@ -27,8 +27,8 @@ pub enum CwtParseError {
     InvalidParts,
     #[error("The main CBOR array does not contain 4 parts. {0} parts found")]
     InvalidPartsCount(usize),
-    #[error("The unprotected header section is not a CBOR map")]
-    UnProtectedHeaderNotMap,
+    #[error("The unprotected header section is not a CBOR map or an emtpy sequence of bytes")]
+    MalformedUnProtectedHeader,
     #[error("The protected header section is not a binary string")]
     ProtectedHeaderNotBinary,
     #[error("The protected header section is not valid CBOR-encoded data")]
@@ -163,17 +163,30 @@ impl TryFrom<&[u8]> for Cwt {
         let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
         let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
 
-        let unprotected_header_iter = parts[1].as_map().ok_or(UnProtectedHeaderNotMap)?.iter();
-        let protected_header_value =
+        // unprotected header must be a cbor map or an empty sequence of bytes
+        let unprotected_header_iter = match parts[1] {
+            Value::Map(ref values) => Some(values.iter()),
+            Value::Bytes(ref values) if values.is_empty() => Some([].iter()),
+            _ => None,
+        }
+        .ok_or(MalformedUnProtectedHeader)?;
+
+        // protected header is a bytes sequence.
+        // If the length of the sequence is 0 we assume it represents an empty map.
+        // Otherwise we decode the binary string as a CBOR value and we make sure it represents a map.
+        let protected_header_values: Vec<(Value, Value)> = if header_protected_raw.is_empty() {
+            vec![]
+        } else {
             ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
-                .map_err(|_| ProtectedHeaderNotValidCbor)?;
-        let protected_header_iter = protected_header_value
-            .as_map()
-            .ok_or(ProtectedHeaderNotMap)?
-            .iter();
+                .map_err(|_| ProtectedHeaderNotValidCbor)?
+                .as_map()
+                .ok_or(ProtectedHeaderNotMap)?
+                .clone()
+        };
+
         // Take data from unprotected header first, then from the protected one
         let header: CwtHeader = unprotected_header_iter
-            .chain(protected_header_iter)
+            .chain(protected_header_values.iter())
             .collect();
 
         let payload: DgcCertContainer =

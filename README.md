@@ -8,7 +8,7 @@
 [![Documentation](https://docs.rs/dgc/badge.svg)](https://docs.rs/dgc)
 [![dependency status](https://deps.rs/repo/github/rust-italia/dgc/status.svg)](https://deps.rs/repo/github/rust-italia/dgc)
 
-A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass 📲✅
+A parser and validator for the **EU Digital Green Certificate (dgc)** a.k.a. _greenpass_ 📲✅
 
   - **Parses** the text content of a European Digital Green Certificate (dgc or greenpass) and extract the embedded data
   - Uses a **Trustlist** of **public keys** and **Elliptic Curve** cryptography to be able to validate the signature of a given certificate
@@ -23,7 +23,6 @@ A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpa
 Current limitations:
 
   - It only supports EC signatures (see [#2](https://github.com/rust-italia/dgc/issues/2))
-  - It does not support KID in the COSE unprotected header (see [#1](https://github.com/rust-italia/dgc/issues/1))
 
 
 ## Usage
