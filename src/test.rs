@@ -14,25 +14,21 @@ pub struct Test {
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-type`
     pub tt: Cow<'static, str>,
     /// NAA Test Name
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nm: Option<String>,
     /// RAT Test name and manufacturer
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-manf`
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ma: Option<Cow<'static, str>>,
     /// Date/Time of Sample Collection
     pub sc: String,
     /// Date/Time (???)
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dr: Option<String>,
     /// Test Result
     /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/test-result`
     pub tr: Cow<'static, str>,
     /// Testing Centre
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tc: Option<String>,
     /// Country of Test

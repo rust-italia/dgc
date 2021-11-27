@@ -3,11 +3,10 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCertName {
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gn: Option<String>,
-    pub r#fn: String,
-    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#fn: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gnt: Option<String>,
     pub fnt: String,
@@ -68,7 +67,7 @@ mod tests {
             ver: String::from("1.3.0"),
             nam: DgcCertName {
                 gn: Some(String::from("ALSTON")),
-                r#fn: String::from("BLAKE"),
+                r#fn: Some(String::from("BLAKE")),
                 gnt: Some(String::from("ALSTON")),
                 fnt: String::from("BLAKE"),
             },
@@ -125,7 +124,7 @@ mod tests {
 "#;
         let cert: DgcCert = serde_json::from_str(json_data).unwrap();
         assert_eq!(cert.ver, String::from("1.0.0"));
-        assert_eq!(cert.nam.r#fn, String::from("Di Caprio"));
+        assert_eq!(cert.nam.r#fn, Some(String::from("Di Caprio")));
         assert_eq!(cert.nam.fnt, String::from("DI<CAPRIO"));
         assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
         assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));
@@ -177,7 +176,7 @@ mod tests {
         let mut cert: DgcCert = serde_json::from_str(json_data).unwrap();
         cert.expand_values();
         assert_eq!(cert.ver, String::from("1.0.0"));
-        assert_eq!(cert.nam.r#fn, String::from("Di Caprio"));
+        assert_eq!(cert.nam.r#fn, Some(String::from("Di Caprio")));
         assert_eq!(cert.nam.fnt, String::from("DI<CAPRIO"));
         assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
         assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));

@@ -12,17 +12,13 @@ const CERTS: i64 = -260;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct DgcCertContainer {
-    #[serde(alias = "1")]
-    #[serde(rename(serialize = "1"))]
+    #[serde(rename = "1")]
     pub issuer: String,
-    #[serde(alias = "6")]
-    #[serde(rename(serialize = "6"))]
+    #[serde(rename = "6")]
     pub issued_at: IntegerOrFloat,
-    #[serde(alias = "4")]
-    #[serde(rename(serialize = "4"))]
-    pub expiration_time: IntegerOrFloat,
-    #[serde(alias = "-260")]
-    #[serde(rename(serialize = "-260"))]
+    #[serde(rename = "4", skip_serializing_if = "Option::is_none")]
+    pub expiration_time: Option<IntegerOrFloat>,
+    #[serde(rename = "-260")]
     pub certs: HashMap<usize, DgcCert>,
 }
 
@@ -90,8 +86,6 @@ impl<'de> Visitor<'de> for DgcCertContainerVisitor {
         }
         let issuer = issuer.ok_or_else(|| serde::de::Error::missing_field("issuer"))?;
         let issued_at = issued_at.ok_or_else(|| serde::de::Error::missing_field("issued_at"))?;
-        let expiration_time =
-            expiration_time.ok_or_else(|| serde::de::Error::missing_field("expiration_time"))?;
         let certs = certs.ok_or_else(|| serde::de::Error::missing_field("certs"))?;
 
         Ok(DgcCertContainer {
