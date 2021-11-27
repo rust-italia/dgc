@@ -3,8 +3,10 @@ use ring_compat::signature::Verifier;
 use std::{convert::TryInto, fmt::Display};
 use thiserror::Error;
 
+/// Represents all the possible types of failures that can occure when parsing a certificate
 #[derive(Error, Debug)]
 pub enum ParseError {
+    /// Found less than 4 bytes.
     #[error("Invalid data, expected more than 4 bytes, found {0} bytes")]
     NotEnoughData(usize),
     #[error("Invalid header. Expected 'HC1:', found: '{0}'")]

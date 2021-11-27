@@ -1,5 +1,24 @@
 use std::borrow::Cow;
 
+/// Get the descriptive value for an identifier using the data in the
+/// [official valuesets](https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets)
+///
+/// Data encoded within the certificates often uses well known IDs to identify certain information (country,
+/// disease, type of test, etc.). This function provides a way to get the _descriptive version_ of these ids.
+///
+/// If the value is not found in the valueset, the given `value_id` is returned.
+///
+/// ## Examples
+///
+/// ```
+/// # use dgc::lookup_value;
+/// #
+/// assert_eq!(lookup_value("AQ"), "Antarctica");
+/// assert_eq!(lookup_value("840539006"), "COVID-19");
+/// assert_eq!(lookup_value("LP217198-3"), "Rapid immunoassay");
+/// assert_eq!(lookup_value("EU/1/20/1528"), "Comirnaty");
+/// assert_eq!(lookup_value("value not in valueset"), "value not in valueset");
+/// ```
 pub fn lookup_value(value_id: &str) -> Cow<'static, str> {
     // Populated from https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets
     // List generated with the following Node.js snippet (for every valueset file):

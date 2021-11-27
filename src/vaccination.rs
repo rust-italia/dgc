@@ -1,49 +1,52 @@
-use std::borrow::Cow;
-
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
-/// <https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/DCC.Types.schema.json>
-
+/// A vaccination entry.
+///
+/// It provides all the necessary detail regarding a vaccination record.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Vaccination {
-    /// disease or agent targeted
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted`
-    pub tg: Cow<'static, str>,
-    /// vaccine or prophylaxis
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-prophylaxis`
-    pub vp: Cow<'static, str>,
-    /// vaccine medicinal product
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-medicinal-product`
-    pub mp: Cow<'static, str>,
+    /// Disease or agent targeted
+    #[serde(rename = "tg")]
+    pub disease_agent_targeted: Cow<'static, str>,
+    /// Vaccine or prophylaxis
+    #[serde(rename = "vp")]
+    pub vaccine_prophylaxis: Cow<'static, str>,
+    /// Vaccine medicinal product
+    #[serde(rename = "mp")]
+    pub medicinal_product: Cow<'static, str>,
     /// Marketing Authorization Holder - if no MAH present, then manufacturer
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/vaccine-mah-manf`
-    pub ma: Cow<'static, str>,
+    #[serde(rename = "ma")]
+    pub manufacturer: Cow<'static, str>,
     /// Dose Number
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/dose_posint`
-    pub dn: usize,
+    #[serde(rename = "dn")]
+    pub dose_number: usize,
     /// Total Series of Doses
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/dose_posint`
-    pub sd: usize,
+    #[serde(rename = "sd")]
+    pub total_doses: usize,
     /// ISO8601 complete date: Date of Vaccination
-    pub dt: String,
+    #[serde(rename = "dt")]
+    pub date: String,
     /// Country of Vaccination
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/country_vt`
-    pub co: Cow<'static, str>,
+    #[serde(rename = "co")]
+    pub country: Cow<'static, str>,
     /// Certificate Issuer
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/issuer`
-    pub is: String,
+    #[serde(rename = "is")]
+    pub issuer: String,
     /// Unique Certificate Identifier: UVCI
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/certificate_id`
-    pub ci: String,
+    #[serde(rename = "ci")]
+    pub id: String,
 }
 
 impl Vaccination {
+    /// Updates all the ids in the vaccination entry with their descriptive counterparts using
+    /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.tg = lookup_value(&self.tg);
-        self.vp = lookup_value(&self.vp);
-        self.mp = lookup_value(&self.mp);
-        self.ma = lookup_value(&self.ma);
-        self.co = lookup_value(&self.co);
+        self.disease_agent_targeted = lookup_value(&self.disease_agent_targeted);
+        self.vaccine_prophylaxis = lookup_value(&self.vaccine_prophylaxis);
+        self.medicinal_product = lookup_value(&self.medicinal_product);
+        self.manufacturer = lookup_value(&self.manufacturer);
+        self.country = lookup_value(&self.country);
     }
 }
