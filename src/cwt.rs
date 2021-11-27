@@ -17,6 +17,7 @@ const COSE_HEADER_KEY_ALG: i128 = 1;
 const COSE_ECDSA256: i128 = -7;
 const COSE_ECDSA384: i128 = -35;
 const COSE_ECDSA512: i128 = -36;
+const COSE_PS256: i128 = -37; //       RSASSA-PSS w/ SHA-256
 
 #[derive(Error, Debug)]
 pub enum CwtParseError {
@@ -51,6 +52,7 @@ pub enum EcAlg {
     Ecdsa256, // -7
     Ecdsa384, // -35
     Ecdsa512, // -36
+    Ps256,    // -37
     Unknown(i128),
 }
 
@@ -61,6 +63,7 @@ impl From<Integer> for EcAlg {
             COSE_ECDSA256 => EcAlg::Ecdsa256,
             COSE_ECDSA384 => EcAlg::Ecdsa384,
             COSE_ECDSA512 => EcAlg::Ecdsa512,
+            COSE_PS256 => EcAlg::Ps256,
             _ => EcAlg::Unknown(u),
         }
     }
