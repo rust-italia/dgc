@@ -121,7 +121,7 @@ fn parse_cwt_payload(data: Vec<u8>) -> Result<Cwt, ParseError> {
 ///
 /// This function will return an error if the certificate cannot be parsed.
 /// If the certificate can be parsed correctly, this function returns a tuple containing a
-/// [`DgcCertContainer`] and a [`SignatureValidity`].
+/// [`DgcContainer`] and a [`SignatureValidity`].
 ///
 /// This design allows for permissive validation of the certificate signature.
 /// In fact, `SignatureValidity` can be used to determine if the signature is valid and even if it is
