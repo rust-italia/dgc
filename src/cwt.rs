@@ -3,7 +3,11 @@ use ciborium::{
     ser::into_writer,
     value::{Integer, Value},
 };
-use std::convert::{TryFrom, TryInto};
+use std::iter::FromIterator;
+use std::{
+    convert::{TryFrom, TryInto},
+    ops::Not,
+};
 use thiserror::Error;
 
 const COSE_SIGN1_CBOR_TAG: u64 = 18;
@@ -26,12 +30,14 @@ pub enum CwtParseError {
     InvalidParts,
     #[error("The main CBOR array does not contain 4 parts. {0} parts found")]
     InvalidPartsCount(usize),
-    #[error("The header section is not a binary string")]
-    HeaderNotBinary,
-    #[error("The header section is not valid CBOR-encoded data")]
-    HeaderNotValidCbor,
-    #[error("The header section does not contain key-value pairs")]
-    HeaderNotMap,
+    #[error("The unprotected header section is not a CBOR map or an emtpy sequence of bytes")]
+    MalformedUnProtectedHeader,
+    #[error("The protected header section is not a binary string")]
+    ProtectedHeaderNotBinary,
+    #[error("The protected header section is not valid CBOR-encoded data")]
+    ProtectedHeaderNotValidCbor,
+    #[error("The protected header section does not contain key-value pairs")]
+    ProtectedHeaderNotMap,
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
     #[error("Cannot deserialize payload: {0}")]
@@ -83,22 +89,22 @@ impl CwtHeader {
     }
 }
 
-impl From<&[(Value, Value)]> for CwtHeader {
-    fn from(data: &[(Value, Value)]) -> Self {
+impl FromIterator<(Value, Value)> for CwtHeader {
+    fn from_iter<T: IntoIterator<Item = (Value, Value)>>(iter: T) -> Self {
         // permissive parsing. We don't want to fail if we can't decode the header
         let mut header = CwtHeader::new();
         // tries to find kid and alg and apply them to the header before returning it
-        for (key, val) in data.iter() {
-            if let Some(k) = key.as_integer() {
+        for (key, val) in iter {
+            if let Value::Integer(k) = key {
                 let k: i128 = k.into();
                 if k == COSE_HEADER_KEY_KID {
                     // found kid
-                    if let Some(kid) = val.as_bytes() {
-                        header.kid(kid.clone());
+                    if let Value::Bytes(kid) = val {
+                        header.kid(kid);
                     }
                 } else if k == COSE_HEADER_KEY_ALG {
                     // found alg
-                    if let Some(raw_alg) = val.as_integer() {
+                    if let Value::Integer(raw_alg) = val {
                         let alg: EcAlg = raw_alg.into();
                         header.alg(alg);
                     }
@@ -111,33 +117,14 @@ impl From<&[(Value, Value)]> for CwtHeader {
 
 #[derive(Debug)]
 pub struct Cwt {
-    pub header_protected_raw: Vec<u8>,
-    pub header_protected: CwtHeader,
-    pub header_unprotected: Value,
-    pub payload_raw: Vec<u8>,
+    header_protected_raw: Vec<u8>,
+    payload_raw: Vec<u8>,
+    pub header: CwtHeader,
     pub payload: DgcCertContainer,
     pub signature: Vec<u8>,
 }
 
 impl Cwt {
-    pub fn new(
-        header_protected_raw: Vec<u8>,
-        header_protected: CwtHeader,
-        header_unprotected: Value,
-        payload_raw: Vec<u8>,
-        payload: DgcCertContainer,
-        signature: Vec<u8>,
-    ) -> Self {
-        Cwt {
-            header_protected_raw,
-            header_protected,
-            header_unprotected,
-            payload_raw,
-            payload,
-            signature,
-        }
-    }
-
     pub fn make_sig_structure(&self) -> Vec<u8> {
         // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
         let sig_structure_cbor = Value::Array(vec![
@@ -152,6 +139,35 @@ impl Cwt {
     }
 }
 
+trait ValueExt: Sized {
+    fn into_tag(self) -> Result<(u64, Box<Value>), Self>;
+    fn into_array(self) -> Result<Vec<Value>, Self>;
+    fn into_bytes(self) -> Result<Vec<u8>, Self>;
+}
+
+impl ValueExt for Value {
+    fn into_tag(self) -> Result<(u64, Box<Value>), Self> {
+        match self {
+            Self::Tag(tag, content) => Ok((tag, content)),
+            _ => Err(self),
+        }
+    }
+
+    fn into_array(self) -> Result<Vec<Value>, Self> {
+        match self {
+            Self::Array(array) => Ok(array),
+            _ => Err(self),
+        }
+    }
+
+    fn into_bytes(self) -> Result<Vec<u8>, Self> {
+        match self {
+            Self::Bytes(bytes) => Ok(bytes),
+            _ => Err(self),
+        }
+    }
+}
+
 impl TryFrom<&[u8]> for Cwt {
     type Error = CwtParseError;
 
@@ -162,41 +178,66 @@ impl TryFrom<&[u8]> for Cwt {
             Value::Tag(tag_id, content) if tag_id == CBOR_WEB_TOKEN_TAG => *content,
             cwt => cwt,
         };
-        let cwt_content = match cwt_content {
-            Value::Tag(COSE_SIGN1_CBOR_TAG, content) => *content,
-            Value::Tag(tag_id, _) => return Err(InvalidTag(tag_id)),
-            cwt => cwt,
+        let cwt_content = match cwt_content.into_tag() {
+            Ok((COSE_SIGN1_CBOR_TAG, content)) => *content,
+            Ok((tag_id, _)) => return Err(InvalidTag(tag_id)),
+            Err(cwt) => cwt,
         };
-        let parts = match cwt_content {
-            Value::Array(parts) => parts,
-            _ => return Err(InvalidParts),
-        };
-        if parts.len() != 4 {
-            return Err(InvalidPartsCount(parts.len()));
+
+        let parts = cwt_content.into_array().map_err(|_| InvalidParts)?;
+
+        let parts_len = parts.len();
+        let [header_protected_raw, unprotected_header, payload_raw, signature]: [Value; 4] =
+            parts.try_into().map_err(|_| InvalidPartsCount(parts_len))?;
+
+        let header_protected_raw = header_protected_raw
+            .into_bytes()
+            .map_err(|_| ProtectedHeaderNotBinary)?;
+        let payload_raw = payload_raw.into_bytes().map_err(|_| PayloadNotBinary)?;
+        let signature = signature.into_bytes().map_err(|_| SignatureNotBinary)?;
+
+        // unprotected header must be a cbor map or an empty sequence of bytes
+        let unprotected_header = match unprotected_header {
+            Value::Map(values) => Some(values),
+            Value::Bytes(values) if values.is_empty() => Some(Vec::new()),
+            _ => None,
         }
-        let header_protected_raw = (parts[0].as_bytes().ok_or(HeaderNotBinary)?).clone();
-        let header_protected: CwtHeader =
-            ciborium::de::from_reader::<'_, Value, _>(header_protected_raw.as_slice())
-                .map_err(|_| HeaderNotValidCbor)?
-                .as_map()
-                .ok_or(HeaderNotMap)?
-                .as_slice()
-                .into();
-        let header_unprotected = parts[1].clone();
-        let payload_raw = (parts[2].as_bytes().ok_or(PayloadNotBinary)?).clone();
-        let signature = (parts[3].as_bytes().ok_or(SignatureNotBinary)?).clone();
+        .ok_or(MalformedUnProtectedHeader)?;
+
+        // protected header is a bytes sequence.
+        // If the length of the sequence is 0 we assume it represents an empty map.
+        // Otherwise we decode the binary string as a CBOR value and we make sure it represents a map.
+        let protected_header_values = header_protected_raw
+            .is_empty()
+            .not()
+            .then(|| {
+                let value = ciborium::de::from_reader(header_protected_raw.as_slice())
+                    .map_err(|_| ProtectedHeaderNotValidCbor)?;
+
+                match value {
+                    Value::Map(map) => Ok(map),
+                    _ => Err(ProtectedHeaderNotMap),
+                }
+            })
+            .transpose()?
+            .unwrap_or_default();
+
+        // Take data from unprotected header first, then from the protected one
+        let header: CwtHeader = unprotected_header
+            .into_iter()
+            .chain(protected_header_values)
+            .collect();
 
         let payload: DgcCertContainer =
             ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
-        Ok(Cwt::new(
+        Ok(Cwt {
             header_protected_raw,
-            header_protected,
-            header_unprotected,
             payload_raw,
+            header,
             payload,
             signature,
-        ))
+        })
     }
 }
 
@@ -225,8 +266,8 @@ mod tests {
 
         let cwt: Cwt = raw_cose_data.as_slice().try_into().unwrap();
 
-        assert_eq!(Some(expected_kid), cwt.header_protected.kid);
-        assert_eq!(Some(expected_alg), cwt.header_protected.alg);
+        assert_eq!(Some(expected_kid), cwt.header.kid);
+        assert_eq!(Some(expected_alg), cwt.header.alg);
         assert_eq!(
             expected_sig_structure,
             hex::encode(cwt.make_sig_structure())
