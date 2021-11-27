@@ -147,7 +147,7 @@ impl FromIterator<(Value, Value)> for CwtHeader {
     }
 }
 
-/// A representation of a CWT ([CBOR Web Token](https://datatracker.ietf.org/doc/html/rfc8392))
+/// A representation of a CWT ([CBOR Web Token](https://datatracker.ietf.org/doc/html/rfc8392)).
 ///
 /// In the context of DGC only a portion of the original CWT specification is actually used
 /// ([COSE_Sign1](https://datatracker.ietf.org/doc/html/rfc8152#section-4.2)) so this module
