@@ -3,13 +3,10 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct DgcCertName {
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gn: Option<String>,
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#fn: Option<String>,
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gnt: Option<String>,
     pub fnt: String,

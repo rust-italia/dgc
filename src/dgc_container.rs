@@ -12,18 +12,13 @@ const CERTS: i64 = -260;
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct DgcCertContainer {
-    #[serde(alias = "1", rename(serialize = "1"))]
+    #[serde(rename = "1")]
     pub issuer: String,
-    #[serde(alias = "6", rename(serialize = "6"))]
+    #[serde(rename = "6")]
     pub issued_at: IntegerOrFloat,
-    #[serde(
-        alias = "4",
-        rename(serialize = "4"),
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "4", skip_serializing_if = "Option::is_none")]
     pub expiration_time: Option<IntegerOrFloat>,
-    #[serde(alias = "-260", rename(serialize = "-260"))]
+    #[serde(rename = "-260")]
     pub certs: HashMap<usize, DgcCert>,
 }
 
