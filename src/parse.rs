@@ -1,5 +1,5 @@
 use crate::{Cwt, CwtParseError, DgcCertContainer, EcAlg, TrustList};
-use ring_compat::signature::{ecdsa::p256::Signature, Verifier};
+use ring_compat::signature::Verifier;
 use std::{convert::TryInto, fmt::Display};
 use thiserror::Error;
 
@@ -101,57 +101,43 @@ pub fn validate(
     data: &str,
     trustlist: &TrustList,
 ) -> Result<(DgcCertContainer, SignatureValidity), ParseError> {
-    // remove prefix
-    let data = remove_prefix(data)?;
+    let cwt = decode_cwt(data)?;
 
-    // base45 decode
-    let decoded = decode_base45(data)?;
+    let kid = match &cwt.header.kid {
+        None => return Ok((cwt.payload, SignatureValidity::MissingKid)),
+        Some(kid) => kid,
+    };
 
-    // decompress the data
-    let decompressed = decompress(decoded)?;
+    match cwt.header.alg {
+        None => return Ok((cwt.payload, SignatureValidity::MissingSigningAlgorithm)),
+        Some(EcAlg::Ecdsa256) => {}
+        Some(alg) => {
+            return Ok((
+                cwt.payload,
+                SignatureValidity::UnsupportedSigningAlgorithm(format!("{:?}", alg)),
+            ))
+        }
+    };
 
-    let cwt = parse_cwt_payload(decompressed)?;
+    let key = match trustlist.get_key(kid) {
+        None => {
+            return Ok((
+                cwt.payload,
+                SignatureValidity::KeyNotInTrustList(kid.clone()),
+            ))
+        }
+        Some(key) => key,
+    };
 
-    if cwt.header.kid.is_none() {
-        return Ok((cwt.payload, SignatureValidity::MissingKid));
+    let signature = match cwt.signature.as_slice().try_into() {
+        Err(_) => return Ok((cwt.payload, SignatureValidity::SignatureMalformed)),
+        Ok(signature) => signature,
+    };
+
+    match key.verify(cwt.make_sig_structure().as_slice(), &signature) {
+        Err(_) => Ok((cwt.payload, SignatureValidity::Invalid)),
+        Ok(_) => Ok((cwt.payload, SignatureValidity::Valid)),
     }
-    let kid = cwt.header.kid.clone().unwrap();
-
-    if cwt.header.alg.is_none() {
-        return Ok((cwt.payload, SignatureValidity::MissingSigningAlgorithm));
-    }
-    if !matches!(cwt.header.alg, Some(EcAlg::Ecdsa256)) {
-        return Ok((
-            cwt.payload,
-            SignatureValidity::UnsupportedSigningAlgorithm(format!(
-                "{:?}",
-                cwt.header.alg.unwrap()
-            )),
-        ));
-    }
-
-    let key = trustlist.get_key(&kid);
-    if key.is_none() {
-        return Ok((
-            cwt.payload,
-            SignatureValidity::KeyNotInTrustList(kid.clone()),
-        ));
-    }
-    let key = key.unwrap();
-    let signature: Result<Signature, _> = cwt.signature.as_slice().try_into();
-    if signature.is_err() {
-        return Ok((cwt.payload, SignatureValidity::SignatureMalformed));
-    }
-
-    let signature = signature.unwrap();
-    if key
-        .verify(cwt.make_sig_structure().as_slice(), &signature)
-        .is_err()
-    {
-        return Ok((cwt.payload, SignatureValidity::Invalid));
-    }
-
-    Ok((cwt.payload, SignatureValidity::Valid))
 }
 
 pub fn decode_cwt(data: &str) -> Result<Cwt, ParseError> {
@@ -171,18 +157,7 @@ pub fn decode_cwt(data: &str) -> Result<Cwt, ParseError> {
 }
 
 pub fn decode(data: &str) -> Result<DgcCertContainer, ParseError> {
-    // remove prefix
-    let data = remove_prefix(data)?;
-
-    // base45 decode
-    let decoded = decode_base45(data)?;
-
-    // decompress the data
-    let decompressed = decompress(decoded)?;
-
-    // parse cose payload
-    let cwt = parse_cwt_payload(decompressed)?;
-
+    let cwt = decode_cwt(data)?;
     Ok(cwt.payload)
 }
 
