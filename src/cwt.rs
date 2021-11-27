@@ -1,4 +1,4 @@
-use crate::DgcCertContainer;
+use crate::DgcContainer;
 use ciborium::{
     ser::into_writer,
     value::{Integer, Value},
@@ -18,39 +18,62 @@ const COSE_ECDSA256: i128 = -7;
 const COSE_ECDSA384: i128 = -35;
 const COSE_ECDSA512: i128 = -36;
 
+/// An enum representing all the possible errors that can occur while trying
+/// to parse data representing a CWT ([CBOR Web Token](https://datatracker.ietf.org/doc/html/rfc8392)).
 #[derive(Error, Debug)]
 pub enum CwtParseError {
+    /// Cannot parse the data as CBOR
     #[error("Cannot parse the data as CBOR: {0}")]
     CborError(#[from] ciborium::de::Error<std::io::Error>),
+    /// The root value is not a tag
     #[error("The root value is not a tag")]
     InvalidRootValue,
-    #[error("Expected COSE_SIGN1_CBOR_TAG ({}) found {0}", COSE_SIGN1_CBOR_TAG)]
+    /// The root tag is invalid
+    #[error(
+        "Expected COSE_SIGN1_CBOR_TAG ({}) or CBOR_WEB_TOKEN_TAG ({}). Found: {0}",
+        COSE_SIGN1_CBOR_TAG,
+        CBOR_WEB_TOKEN_TAG
+    )]
     InvalidTag(u64),
+    /// The main CBOR object is not an array
     #[error("The main CBOR object is not an array")]
     InvalidParts,
+    /// The main CBOR array does not contain 4 parts
     #[error("The main CBOR array does not contain 4 parts. {0} parts found")]
     InvalidPartsCount(usize),
+    /// The unprotected header section is not a CBOR map or an emtpy sequence of bytes
     #[error("The unprotected header section is not a CBOR map or an emtpy sequence of bytes")]
     MalformedUnProtectedHeader,
+    /// The protected header section is not a binary string
     #[error("The protected header section is not a binary string")]
     ProtectedHeaderNotBinary,
+    /// The protected header section is not valid CBOR-encoded data
     #[error("The protected header section is not valid CBOR-encoded data")]
     ProtectedHeaderNotValidCbor,
+    /// The protected header section does not contain key-value pairs
     #[error("The protected header section does not contain key-value pairs")]
     ProtectedHeaderNotMap,
+    /// The payload section is not a binary string
     #[error("The payload section is not a binary string")]
     PayloadNotBinary,
+    /// Cannot deserialize the payload
     #[error("Cannot deserialize payload: {0}")]
     InvalidPayload(#[source] ciborium::de::Error<std::io::Error>),
+    /// The signature section is not a binary string
     #[error("The signature section is not a binary string")]
     SignatureNotBinary,
 }
 
+/// An enum representing varius EC signature algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcAlg {
+    /// Ecdsa256
     Ecdsa256, // -7
+    /// Ecdsa384
     Ecdsa384, // -35
+    /// Ecdsa512
     Ecdsa512, // -36
+    /// Unknown algorithm with a given identifier
     Unknown(i128),
 }
 
@@ -66,9 +89,18 @@ impl From<Integer> for EcAlg {
     }
 }
 
+/// The CWT header object.
+///
+/// This is a simplification of the actual CWT structure. In fact,
+/// in the CWT spec there are 2 headers (protected header and unprotected header).
+///
+/// For the sake of DGC, we only need to extract `kid` and `alg` from either of them,
+/// so we use this struct to keep these values.
 #[derive(Debug)]
 pub struct CwtHeader {
+    /// The Key ID used for signing the certificate
     pub kid: Option<Vec<u8>>,
+    /// The signature algorithm used to sign the certificate
     pub alg: Option<EcAlg>,
 }
 
@@ -115,18 +147,29 @@ impl FromIterator<(Value, Value)> for CwtHeader {
     }
 }
 
+/// A representation of a CWT ([CBOR Web Token](https://datatracker.ietf.org/doc/html/rfc8392))
+///
+/// In the context of DGC only a portion of the original CWT specification is actually used
+/// ([COSE_Sign1](https://datatracker.ietf.org/doc/html/rfc8152#section-4.2)) so this module
+/// is limited to implementing exclusively that portion.
 #[derive(Debug)]
 pub struct Cwt {
     header_protected_raw: Vec<u8>,
     payload_raw: Vec<u8>,
+    /// A simplified representation of the original CWT headers (protected + unprotected)
+    ///
+    /// Stores only the `kid` and `alg`
     pub header: CwtHeader,
-    pub payload: DgcCertContainer,
+    /// The CWT payload parse as a DgcContainer
+    pub payload: DgcContainer,
+    /// The raw bytes of the signature
     pub signature: Vec<u8>,
 }
 
 impl Cwt {
+    /// Creates the [sig structure](https://datatracker.ietf.org/doc/html/rfc8152#section-4.4) needed to be able
+    /// to verify the signature against a public key.
     pub fn make_sig_structure(&self) -> Vec<u8> {
-        // https://datatracker.ietf.org/doc/html/rfc8152#section-4.4
         let sig_structure_cbor = Value::Array(vec![
             Value::Text(String::from("Signature1")), // context of the signature
             Value::Bytes(self.header_protected_raw.clone()), // protected attributes from the body structure
@@ -139,6 +182,8 @@ impl Cwt {
     }
 }
 
+/// Extends `ciborium::value::Value` with some useful methods.
+/// TODO: send a PR to `ciborium` to have these utilities out of the box.
 trait ValueExt: Sized {
     fn into_tag(self) -> Result<(u64, Box<Value>), Self>;
     fn into_array(self) -> Result<Vec<Value>, Self>;
@@ -228,7 +273,7 @@ impl TryFrom<&[u8]> for Cwt {
             .chain(protected_header_values)
             .collect();
 
-        let payload: DgcCertContainer =
+        let payload: DgcContainer =
             ciborium::de::from_reader(payload_raw.as_slice()).map_err(InvalidPayload)?;
 
         Ok(Cwt {

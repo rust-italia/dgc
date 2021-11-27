@@ -1,37 +1,40 @@
-use std::borrow::Cow;
-
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
-/// Recovery Entry
-/// <https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/DCC.Types.schema.json>
-
+/// A recovery entry.
+///
+/// It provides all the necessary detail regarding the recovery from a given disease.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Recovery {
-    /// Disease agent targeted
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/disease-agent-targeted`
-    pub tg: Cow<'static, str>,
+    /// Targeted Disease or agent
+    #[serde(rename = "tg")]
+    pub targeted_disease: Cow<'static, str>,
     /// ISO 8601 complete date of first positive NAA test result
-    pub fr: Cow<'static, str>,
+    #[serde(rename = "fr")]
+    pub result_date: Cow<'static, str>,
     /// Country of Test
-    /// `https://id.uvci.eu/DCC.ValueSets.schema.json#/$defs/country_vt`
-    pub co: Cow<'static, str>,
+    #[serde(rename = "co")]
+    pub country: Cow<'static, str>,
     /// Certificate Issuer
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/issuer`
-    pub is: String,
+    #[serde(rename = "is")]
+    pub issuer: String,
     /// ISO 8601 complete date: Certificate Valid From
-    pub df: String,
+    #[serde(rename = "df")]
+    pub valid_from: String,
     /// ISO 8601 complete date: Certificate Valid Until
-    pub du: String,
+    #[serde(rename = "du")]
+    pub valid_until: String,
     /// Unique Certificate Identifier, UVCI
-    /// `https://id.uvci.eu/DCC.Core.Types.schema.json#/$defs/certificate_id`
-    pub ci: String,
+    #[serde(rename = "ci")]
+    pub id: String,
 }
 
 impl Recovery {
+    /// Updates all the ids in the recovery entry with their descriptive counterparts using
+    /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.tg = lookup_value(&self.tg);
-        self.fr = lookup_value(&self.fr);
-        self.co = lookup_value(&self.co);
+        self.targeted_disease = lookup_value(&self.targeted_disease);
+        self.country = lookup_value(&self.country);
     }
 }

@@ -7,9 +7,9 @@ use std::borrow::Cow;
 /// It provides all the necessary detail regarding a vaccination record.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Vaccination {
-    /// Disease or agent targeted
+    /// Targeted Disease or agent
     #[serde(rename = "tg")]
-    pub disease_agent_targeted: Cow<'static, str>,
+    pub targeted_disease: Cow<'static, str>,
     /// Vaccine or prophylaxis
     #[serde(rename = "vp")]
     pub vaccine_prophylaxis: Cow<'static, str>,
@@ -43,7 +43,7 @@ impl Vaccination {
     /// Updates all the ids in the vaccination entry with their descriptive counterparts using
     /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.disease_agent_targeted = lookup_value(&self.disease_agent_targeted);
+        self.targeted_disease = lookup_value(&self.targeted_disease);
         self.vaccine_prophylaxis = lookup_value(&self.vaccine_prophylaxis);
         self.medicinal_product = lookup_value(&self.medicinal_product);
         self.manufacturer = lookup_value(&self.manufacturer);

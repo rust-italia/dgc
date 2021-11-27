@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 /// Get the descriptive value for an identifier using the data in the
-/// [official valuesets](https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets)
+/// [official valuesets](https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets).
 ///
 /// Data encoded within the certificates often uses well known IDs to identify certain information (country,
 /// disease, type of test, etc.). This function provides a way to get the _descriptive version_ of these ids.

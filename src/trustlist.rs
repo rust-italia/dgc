@@ -35,7 +35,7 @@ pub enum KeyParseError {
 }
 
 /// Error struct that represents all the possible errors that can occur
-/// while trying to create a trustlist from a given JSON payload
+/// while trying to create a trustlist from a given JSON payload.
 #[derive(Error, Debug)]
 pub enum TrustListFromJsonError {
     /// The given JSON is not an object
@@ -95,7 +95,7 @@ impl TrustList {
         }
     }
 
-    /// Adss a new public key to the trustlist
+    /// Adds a new public key to the trustlist
     pub fn add(&mut self, kid: &[u8], key: VerifyingKey) {
         self.keys.insert(kid.to_vec(), key);
     }

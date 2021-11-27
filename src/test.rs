@@ -7,9 +7,9 @@ use std::borrow::Cow;
 /// It provides all the necessary detail regarding a test record against a given disease.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Test {
-    /// Disease agent targeted
+    /// Targeted disease or agent
     #[serde(rename = "tg")]
-    pub disease_agent_targeted: Cow<'static, str>,
+    pub targeted_disease: Cow<'static, str>,
     /// Type of test
     #[serde(rename = "tt")]
     pub test_type: Cow<'static, str>,
@@ -44,10 +44,10 @@ pub struct Test {
 }
 
 impl Test {
-    /// Updates all the ids in the vaccination entry with their descriptive counterparts using
+    /// Updates all the ids in the test entry with their descriptive counterparts using
     /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.disease_agent_targeted = lookup_value(&self.disease_agent_targeted);
+        self.targeted_disease = lookup_value(&self.targeted_disease);
         self.test_type = lookup_value(&self.test_type);
         self.result = lookup_value(&self.result);
         if let Some(ma) = &mut self.manufacturer {

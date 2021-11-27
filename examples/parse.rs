@@ -9,41 +9,49 @@ fn main() {
 
     // It prints:
     //
-    // DgcCertContainer {
+    // DgcContainer {
     //     issuer: "FR",
-    //     issued_at: 1623672054,
-    //     expiration_time: 1623931254,
+    //     issued_at: Float(
+    //         1623672054.0,
+    //     ),
+    //     expires_at: Some(
+    //         Float(
+    //             1623931254.0,
+    //         ),
+    //     ),
     //     certs: {
-    //         1: DgcCert {
-    //             ver: "1.2.1",
-    //             nam: DgcCertName {
-    //                 gn: None,
-    //                 fn: "Test",
-    //                 gnt: None,
-    //                 fnt: "TEST",
+    //         1: Dgc {
+    //             version: "1.2.1",
+    //             name: DgcName {
+    //                 forename: None,
+    //                 surname: Some(
+    //                     "Test",
+    //                 ),
+    //                 forename_standard: None,
+    //                 surname_standard: "TEST",
     //             },
-    //             dob: "2009-02-28",
-    //             t: [
+    //             date_of_birth: "2009-02-28",
+    //             tests: [
     //                 Test {
-    //                     tg: "840539006",
-    //                     tt: "LP217198-3",
-    //                     nm: None,
-    //                     ma: Some(
+    //                     targeted_disease: "840539006",
+    //                     test_type: "LP217198-3",
+    //                     name: None,
+    //                     manufacturer: Some(
     //                         "345",
     //                     ),
-    //                     sc: "2021-04-13T14:20:00Z",
-    //                     dr: None,
-    //                     tr: "260415000",
-    //                     tc: Some(
+    //                     date_of_collection: "2021-04-13T14:20:00Z",
+    //                     date_of_result: None,
+    //                     result: "260415000",
+    //                     testing_centre: Some(
     //                         "Centre de test",
     //                     ),
-    //                     co: "FR",
-    //                     is: "Emetteur du certificat",
-    //                     ci: "URN:UVCI:01:FR:GGD81AAH16AZ#8",
+    //                     country: "FR",
+    //                     issuer: "Emetteur du certificat",
+    //                     id: "URN:UVCI:01:FR:GGD81AAH16AZ#8",
     //                 },
     //             ],
-    //             v: [],
-    //             r: [],
+    //             vaccines: [],
+    //             recoveries: [],
     //         },
     //     },
     // }

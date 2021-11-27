@@ -87,6 +87,18 @@ cargo run --example <name of example file>
 ```
 
 
+## Data structure
+
+The information is stored inside a certificato in a multi-layered format.
+
+This library tries to find a compromise between making the information as accessible as possible and respecting the original structure of
+the raw data.
+
+The following diagram represents how the information is organised once a certificate has been decoded:
+
+[![Dgc data organisation diagram](https://github.com/rust-italia/dgc/raw/main/docs/certificate_structure.svg)](https://github.com/rust-italia/dgc/raw/main/docs/certificate_structure.svg)
+
+
 ## Contributing
 
 Everyone is very welcome to contribute to this project.
