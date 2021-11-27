@@ -73,17 +73,17 @@ mod tests {
             },
             dob: String::from("1990-01-01"),
             t: vec![Test {
-                tg: Cow::from("840539006"),
-                tt: Cow::from("LP6464-4"),
-                sc: String::from("2021-10-09T12:03:12Z"),
-                tr: Cow::from("260415000"),
-                tc: Some(String::from("Alhosn One Day Surgery")),
-                co: Cow::from("AE"),
-                is: Cow::from("Ministry of Health & Prevention"),
-                ci: String::from("URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06"),
-                nm: None,
-                ma: None,
-                dr: None,
+                disease_agent_targeted: Cow::from("840539006"),
+                test_type: Cow::from("LP6464-4"),
+                date_of_collection: String::from("2021-10-09T12:03:12Z"),
+                result: Cow::from("260415000"),
+                testing_centre: Some(String::from("Alhosn One Day Surgery")),
+                country: Cow::from("AE"),
+                issuer: Cow::from("Ministry of Health & Prevention"),
+                id: String::from("URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06"),
+                name: None,
+                manufacturer: None,
+                date_of_result: None,
             }],
             v: vec![],
             r: vec![],
@@ -129,18 +129,27 @@ mod tests {
         assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
         assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));
         assert_eq!(cert.dob, String::from("1977-06-16"));
-        assert_eq!(cert.t[0].tg, String::from("840539006"));
-        assert_eq!(cert.t[0].tt, String::from("LP6464-4"));
-        assert_eq!(cert.t[0].nm, Some(String::from("Roche LightCycler qPCR")));
-        assert_eq!(cert.t[0].ma, Some(Cow::from("1232")));
-        assert_eq!(cert.t[0].sc, String::from("2021-05-03T10:27:15Z"));
-        assert_eq!(cert.t[0].dr, Some(String::from("2021-05-11T12:27:15Z")));
-        assert_eq!(cert.t[0].tr, String::from("260415000"));
-        assert_eq!(cert.t[0].tc, Some(String::from("Policlinico Umberto I")));
-        assert_eq!(cert.t[0].co, String::from("IT"));
-        assert_eq!(cert.t[0].is, String::from("IT"));
+        assert_eq!(cert.t[0].disease_agent_targeted, String::from("840539006"));
+        assert_eq!(cert.t[0].test_type, String::from("LP6464-4"));
+        assert_eq!(cert.t[0].name, Some(String::from("Roche LightCycler qPCR")));
+        assert_eq!(cert.t[0].manufacturer, Some(Cow::from("1232")));
         assert_eq!(
-            cert.t[0].ci,
+            cert.t[0].date_of_collection,
+            String::from("2021-05-03T10:27:15Z")
+        );
+        assert_eq!(
+            cert.t[0].date_of_result,
+            Some(String::from("2021-05-11T12:27:15Z"))
+        );
+        assert_eq!(cert.t[0].result, String::from("260415000"));
+        assert_eq!(
+            cert.t[0].testing_centre,
+            Some(String::from("Policlinico Umberto I"))
+        );
+        assert_eq!(cert.t[0].country, String::from("IT"));
+        assert_eq!(cert.t[0].issuer, String::from("IT"));
+        assert_eq!(
+            cert.t[0].id,
             String::from("01IT053059F7676042D9BEE9F874C4901F9B#3")
         );
     }
@@ -181,26 +190,35 @@ mod tests {
         assert_eq!(cert.nam.gn, Some(String::from("Marilù Teresa")));
         assert_eq!(cert.nam.gnt, Some(String::from("MARILU<TERESA")));
         assert_eq!(cert.dob, String::from("1977-06-16"));
-        assert_eq!(cert.t[0].tg, String::from("COVID-19"));
+        assert_eq!(cert.t[0].disease_agent_targeted, String::from("COVID-19"));
         assert_eq!(
-            cert.t[0].tt,
+            cert.t[0].test_type,
             String::from("Nucleic acid amplification with probe detection")
         );
-        assert_eq!(cert.t[0].nm, Some(String::from("Roche LightCycler qPCR")));
+        assert_eq!(cert.t[0].name, Some(String::from("Roche LightCycler qPCR")));
         assert_eq!(
-            cert.t[0].ma,
+            cert.t[0].manufacturer,
             Some(Cow::from(
                 "Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test"
             ))
         );
-        assert_eq!(cert.t[0].sc, String::from("2021-05-03T10:27:15Z"));
-        assert_eq!(cert.t[0].dr, Some(String::from("2021-05-11T12:27:15Z")));
-        assert_eq!(cert.t[0].tr, String::from("Not detected"));
-        assert_eq!(cert.t[0].tc, Some(String::from("Policlinico Umberto I")));
-        assert_eq!(cert.t[0].co, String::from("Italy"));
-        assert_eq!(cert.t[0].is, String::from("Italy"));
         assert_eq!(
-            cert.t[0].ci,
+            cert.t[0].date_of_collection,
+            String::from("2021-05-03T10:27:15Z")
+        );
+        assert_eq!(
+            cert.t[0].date_of_result,
+            Some(String::from("2021-05-11T12:27:15Z"))
+        );
+        assert_eq!(cert.t[0].result, String::from("Not detected"));
+        assert_eq!(
+            cert.t[0].testing_centre,
+            Some(String::from("Policlinico Umberto I"))
+        );
+        assert_eq!(cert.t[0].country, String::from("Italy"));
+        assert_eq!(cert.t[0].issuer, String::from("Italy"));
+        assert_eq!(
+            cert.t[0].id,
             String::from("01IT053059F7676042D9BEE9F874C4901F9B#3")
         );
     }
