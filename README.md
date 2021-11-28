@@ -89,7 +89,7 @@ cargo run --example <name of example file>
 
 ## Data structure
 
-The information is stored inside a certificato in a multi-layered format.
+The information is stored inside a certification in a multi-layered format.
 
 This library tries to find a compromise between making the information as accessible as possible and respecting the original structure of
 the raw data.
