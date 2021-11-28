@@ -95,7 +95,7 @@ impl From<Integer> for EcAlg {
 /// in the CWT spec there are 2 headers (protected header and unprotected header).
 ///
 /// For the sake of DGC, we only need to extract `kid` and `alg` from either of them,
-/// so we use this struct to keep these values.
+/// so we use this struct to keep those values.
 #[derive(Debug)]
 pub struct CwtHeader {
     /// The Key ID used for signing the certificate
