@@ -670,7 +670,7 @@ fn test_case(#[case] test_file: &str) {
     // compare the content only if the JSON field is populated in test data
     if test_data.get("JSON").is_some() {
         let cert_content = serde_json::ser::to_string(&test_data["JSON"]).unwrap();
-        let expected_cert_payload: DgcCert = serde_json::from_str(cert_content.as_str()).unwrap();
+        let expected_cert_payload: Dgc = serde_json::from_str(cert_content.as_str()).unwrap();
         // makes sure that the content of the decoded certificate matches the expectation
         assert_eq!(*cwt.payload.certs.get(&1).unwrap(), expected_cert_payload);
     }

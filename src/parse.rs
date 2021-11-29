@@ -1,30 +1,45 @@
-use crate::{Cwt, CwtParseError, DgcCertContainer, EcAlg, TrustList};
+use crate::{Cwt, CwtParseError, DgcContainer, EcAlg, TrustList};
 use ring_compat::signature::Verifier;
 use std::{convert::TryInto, fmt::Display};
 use thiserror::Error;
 
+/// Represents all the possible types of failures that can occure when parsing a certificate.
 #[derive(Error, Debug)]
 pub enum ParseError {
+    /// Found less than 4 bytes.
     #[error("Invalid data, expected more than 4 bytes, found {0} bytes")]
     NotEnoughData(usize),
-    #[error("Invalid header. Expected 'HC1:', found: '{0}'")]
+    /// Invalid prefix
+    #[error("Invalid prefix. Expected 'HC1:', found: '{0}'")]
     InvalidPrefix(String),
+    /// Error decoding using base45
     #[error("Cannot base45 decode the data: {0}")]
     Base45Decode(#[from] base45::DecodeError),
+    /// Error decompressing using zlib inflate
     #[error("Could not decompress the data: {0}")]
     Deflate(String),
+    /// Error decoding the CWT payload
     #[error("Could not decode CWT data: {0}")]
     CwtDecode(#[from] CwtParseError),
 }
 
+/// Represents all the possible outcomes of trying to validate a signature
+/// for a given certificate.
 #[derive(Debug)]
 pub enum SignatureValidity {
+    /// The signature is valid
     Valid,
+    /// The signature is not valid
     Invalid,
+    /// The signature could not be validated because the certificate did not have a kid
     MissingKid,
+    /// The signature could not be validated because the certificate did not have an alg
     MissingSigningAlgorithm,
+    /// The signature in the certificate is malformed
     SignatureMalformed,
+    /// The signature could not be validated because the signing algorithm is not supported
     UnsupportedSigningAlgorithm(String),
+    /// The signature could not be validated because the public key was not found in the given trustlist
     KeyNotInTrustList(Vec<u8>),
 }
 
@@ -63,6 +78,7 @@ impl Display for SignatureValidity {
 }
 
 impl SignatureValidity {
+    /// Checks if the signature is valid
     pub fn is_valid(&self) -> bool {
         matches!(self, SignatureValidity::Valid)
     }
@@ -97,10 +113,49 @@ fn parse_cwt_payload(data: Vec<u8>) -> Result<Cwt, ParseError> {
     Ok(cwt)
 }
 
+/// Parses and validates a given certificate.
+///
+/// This function is a high level helper that allows you to extract the data from a
+/// certificate and at the same time it tries to validate the signature against a given
+/// trustlist.
+///
+/// This function will return an error if the certificate cannot be parsed.
+/// If the certificate can be parsed correctly, this function returns a tuple containing a
+/// [`DgcContainer`] and a [`SignatureValidity`].
+///
+/// This design allows for permissive validation of the certificate signature.
+/// In fact, `SignatureValidity` can be used to determine if the signature is valid and even if it is
+/// invalid (or the validity cannot be assessed) you could still access all the information
+/// in the certificate.
+///
+/// ## Example
+///
+/// ```
+/// let raw_certificate_data = "HC1:NCF:603A0T9WTWGSLKC 4K694WJN.0J$6C-7WAB0XK3JCSGA2F3R8PP4V2F35VPP.EY50.FK8ZKO/EZKEZ96LF6/A6..DV%DZJC0/D5UA QELPCG/DYUCHY83UAGVC*JCNF6F463W5KF6VF6IECSHG4KCD3DX47B46IL6646H*6MWEWJDA6A:961A6Q47EM6B$DFOC0R63KCZPCNF6OF63W5$Q6+96/SA5R6NF61G73564KC*KETF6A46.96646B565WEC.D1$CKWEDZC6VCS446$C4WEUPC3JCUIA+ED$.EF$DMWE8$CBJEMVCB445$CBWER.CGPC4WEOPCE8FHZA1+9LZAZM81G72A62+8OG7J09U47AB8V59T%6ZHBO57X48RUIY03XQOK*FZUNM UFY4D5C S3R9UW-2R*4KZJT5M MIM:03RMZNA LKTO34PA.H51966PS0KAP-KLPH.Q6$KSTJ0-G658RL5HR1";
+/// // This is a X509 certificate that contains a Public Key
+/// let signature_certificate = "MIIDujCCAaKgAwIBAgIIKUgZWBL1pnMwDQYJKoZIhvcNAQELBQAwZjELMAkGA1UEBhMCRlIxHTAbBgNVBAoTFElNUFJJTUVSSUUgTkFUSU9OQUxFMR4wHAYDVQQLExVGT1IgVEVTVCBQVVJQT1NFIE9OTFkxGDAWBgNVBAMTD0lOR1JPVVBFIERTYyBDQTAeFw0yMTA2MDIxMjE0MDBaFw0yMTA5MDIxMjE0MDBaMEAxCzAJBgNVBAYTAkZSMREwDwYDVQQKDAhDRVJUSUdOQTEeMBwGA1UEAwwVQ0VSVElHTkEgLSBURVNUIERHQyAxMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAETdygPqv/l6tWFqHFEIEZxfdhtbrBpDgVjmUN4CKOu/EQFwkVVQ/4N0BamwtI0hSnSZP72byk6XqpMErYWRTCbKNdMFswCQYDVR0TBAIwADAdBgNVHQ4EFgQUUjXs7mCY2ZgROQSsw1CN0qM4Zj8wHwYDVR0jBBgwFoAUYLoYTllzE2jOy3VMAuU4OJjOingwDgYDVR0PAQH/BAQDAgeAMA0GCSqGSIb3DQEBCwUAA4ICAQAvxuSBWNOrk+FRIbU42tnwZBllUeNH7cWcrYHV0O+1k3RbpvYa0YE2J0du301/a+0+pqlatR8o8Coe/NFt4/KSu+To+i8uZXiHJn2XrAZgwPqqTvsMUVwFPWhwJpLMCejmU0A8JEhXH7s0BN6orqIH0JKLpl0/MdVviIUksnxPnP2wdCtz6dL5zKhi+Qt8BFr55PL1dvuWxnuFOsKr89MqaexQVe/WvKhG5GXBaJFDbp4USVX9Z8vwp4SfEs5nh0ti0M2fyGrpfPvWWFra/qoRGAUJEPHHPMqZT45c1rXo12+cpme2CYM4rsliQsaqdH462p7YNNI5reBC+WHhzGr9FGq9yZ1gu/yhz1cJxNwE5gsBTWnJmSnRE75lYj1a/GAb+9wfABd1Vx68Fnww3Ngp8lG2T1vEWhwQusj/OmloVbqjJiCi6PcZ1/OSTbx58Zv9ySwDd3QGxPygfMy87FuhT6iWlPv57qTMrgtEjq89J8v3WnReAhp12ru5ehN2Zv0ZkO1Of0H3yxNBsvfHUgpgwsRn4zjLVbkU+a3hr4famOThmB1X0tuikY0mbNtVejPGS0qCgeLgj8ILlUrRtsW4R6WzZdIsz7H9AYnpyZbdMPsa856xBR9s0+AzguJI9kkJxvVcpR//GiXMhs0EdgWj2rouOEPZiFNdWpVRrxv/kw==";
+///
+/// // We create a new Trustlist (container of "trusted" public keys)
+/// let mut trustlist = dgc::TrustList::default();
+/// // We add the public key in the certificate to the trustlist
+/// trustlist
+///     .add_key_from_certificate(signature_certificate)
+///     .expect("Failed to add key from certificate");
+///
+/// // Now we can validate the signature (this returns)
+/// let (certificate_container, signature_validity) =
+///     dgc::validate(raw_certificate_data, &trustlist).expect("Cannot parse certificate data");
+///
+/// // Prints the infomration inside the container
+/// println!("{:#?}", &certificate_container);
+///
+/// // Checks the validity of the signature
+/// assert!(signature_validity.is_valid());
+/// ```
 pub fn validate(
     data: &str,
     trustlist: &TrustList,
-) -> Result<(DgcCertContainer, SignatureValidity), ParseError> {
+) -> Result<(DgcContainer, SignatureValidity), ParseError> {
     let cwt = decode_cwt(data)?;
 
     let kid = match &cwt.header.kid {
@@ -140,6 +195,10 @@ pub fn validate(
     }
 }
 
+/// Decodes the certificate and returns the [`Cwt`] data contained in it.
+///
+/// You generally don't need to use this function unless you need to access
+/// the raw information contained in the [`Cwt`] structure.
 pub fn decode_cwt(data: &str) -> Result<Cwt, ParseError> {
     // remove prefix
     let data = remove_prefix(data)?;
@@ -156,7 +215,22 @@ pub fn decode_cwt(data: &str) -> Result<Cwt, ParseError> {
     Ok(cwt)
 }
 
-pub fn decode(data: &str) -> Result<DgcCertContainer, ParseError> {
+/// Decodes the certificate and returns the [`DgcContainer`] data contained in it.
+///
+/// This function is recommended when you don't want to validate the signature but you
+/// are just interested in reading the content of the certificate.
+///
+/// ## Example
+///
+/// ```
+/// let raw_certificate_data = "HC1:NCF:603A0T9WTWGSLKC 4K694WJN.0J$6C-7WAB0XK3JCSGA2F3R8PP4V2F35VPP.EY50.FK8ZKO/EZKEZ96LF6/A6..DV%DZJC0/D5UA QELPCG/DYUCHY83UAGVC*JCNF6F463W5KF6VF6IECSHG4KCD3DX47B46IL6646H*6MWEWJDA6A:961A6Q47EM6B$DFOC0R63KCZPCNF6OF63W5$Q6+96/SA5R6NF61G73564KC*KETF6A46.96646B565WEC.D1$CKWEDZC6VCS446$C4WEUPC3JCUIA+ED$.EF$DMWE8$CBJEMVCB445$CBWER.CGPC4WEOPCE8FHZA1+9LZAZM81G72A62+8OG7J09U47AB8V59T%6ZHBO57X48RUIY03XQOK*FZUNM UFY4D5C S3R9UW-2R*4KZJT5M MIM:03RMZNA LKTO34PA.H51966PS0KAP-KLPH.Q6$KSTJ0-G658RL5HR1";
+///
+/// let certificate_container =
+/// dgc::decode(raw_certificate_data).expect("Cannot parse certificate data");
+///
+/// println!("{:#?}", certificate_container);
+/// ```
+pub fn decode(data: &str) -> Result<DgcContainer, ParseError> {
     let cwt = decode_cwt(data)?;
     Ok(cwt.payload)
 }
@@ -207,7 +281,7 @@ mod tests {
         let data = "HC1:NCFOXN%TS3DH3ZSUZK+.V0ETD%65NL-AH-R6IOO6+IDOEZ/18WAV$E3+3AT4V22F/8X*G3M9JUPY0BX/KR96R/S09T./0LWTKD33236J3TA3M*4VV2 73-E3GG396B-43O058YIB73A*G3W19UEBY5:PI0EGSP4*2DN43U*0CEBQ/GXQFY73CIBC:G 7376BXBJBAJ UNFMJCRN0H3PQN*E33H3OA70M3FMJIJN523.K5QZ4A+2XEN QT QTHC31M3+E32R44$28A9H0D3ZCL4JMYAZ+S-A5$XKX6T2YC 35H/ITX8GL2-LH/CJTK96L6SR9MU9RFGJA6Q3QR$P2OIC0JVLA8J3ET3:H3A+2+33U SAAUOT3TPTO4UBZIC0JKQTL*QDKBO.AI9BVYTOCFOPS4IJCOT0$89NT2V457U8+9W2KQ-7LF9-DF07U$B97JJ1D7WKP/HLIJLRKF1MFHJP7NVDEBU1J*Z222E.GJI77N IKXN9+6J5DG3VWU5ZXT$ZRWP7++KM5MMUN/7UTFEEZPBK8C 7KMBI.3ZDBDREY7IM*N1KS3UI$6JD.JKLKA3UBJM-SJ9:OHBURZEF50WAQ 3";
         let dgc_cert_container = decode(data).unwrap();
 
-        let expected: DgcCertContainer = serde_json::from_str("{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}").unwrap();
+        let expected: DgcContainer = serde_json::from_str("{\"4\":1624879116,\"6\":1624706316,\"1\":\"AT\",\"-260\":{\"1\":{\"v\":[{\"dn\":1,\"ma\":\"ORG-100030215\",\"vp\":\"1119349007\",\"dt\":\"2021-02-18\",\"co\":\"AT\",\"ci\":\"URN:UVCI:01:AT:10807843F94AEE0EE5093FBC254BD813#B\",\"mp\":\"EU/1/20/1528\",\"is\":\"Ministry of Health, Austria\",\"sd\":2,\"tg\":\"840539006\"}],\"nam\":{\"fnt\":\"MUSTERFRAU<GOESSINGER\",\"fn\":\"Musterfrau-Gößinger\",\"gnt\":\"GABRIELE\",\"gn\":\"Gabriele\"},\"ver\":\"1.2.1\",\"dob\":\"1998-02-26\"}}}").unwrap();
         assert_eq!(expected, dgc_cert_container);
     }
 

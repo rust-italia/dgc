@@ -1,14 +1,17 @@
-pub mod cwt;
-pub mod dgc_cert;
-pub mod dgc_container;
-pub mod parse;
-pub mod recovery;
-pub mod test;
-pub mod trustlist;
-pub mod vaccination;
-pub mod valuesets;
+#![warn(missing_docs)]
+#![doc(html_logo_url = "https://github.com/rust-italia/dgc/raw/main/dgc-rust-logo.svg")]
+#![doc = include_str!("../README.md")]
+mod cwt;
+mod dgc;
+mod dgc_container;
+mod parse;
+mod recovery;
+mod test;
+mod trustlist;
+mod vaccination;
+mod valuesets;
+pub use crate::dgc::*;
 pub use cwt::*;
-pub use dgc_cert::*;
 pub use dgc_container::*;
 pub use parse::*;
 pub use recovery::*;

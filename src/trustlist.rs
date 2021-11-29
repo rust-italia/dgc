@@ -3,68 +3,99 @@ use ring_compat::signature::ecdsa::p256::VerifyingKey;
 use std::{collections::HashMap, convert::TryFrom};
 use thiserror::Error;
 
+/// Struct used to index all the available public keys which
+/// can be used to validate the signature on a given certificate.
+///
+/// Keys are indexed by their `kid` (Key ID) which is an arbitrary sequence of bytes.
 #[derive(Debug)]
 pub struct TrustList {
     keys: HashMap<Vec<u8>, VerifyingKey>,
 }
 
 impl TrustList {
+    /// Returns a given key by kid
     pub fn get_key(&self, kid: &[u8]) -> Option<&VerifyingKey> {
         self.keys.get(kid)
     }
 }
 
+/// Error struct that represents all the possible errors that can occur
+/// while trying to parse a public key.
 #[derive(Error, Debug)]
 pub enum KeyParseError {
+    /// Failed to decode the string using base64
     #[error("Cannot decode base64 data: {0}")]
     Base64DecodeError(#[from] base64::DecodeError),
+    /// The encoded string did not contain a valid X509 key
     #[error("Failed to parse X509 data: {0}")]
     X509ParseError(#[from] x509_parser::nom::Err<x509_parser::error::X509Error>),
+    /// The given certificate did not contain a public key
     #[error("Cannot extract a valid public key from certificate: {0}")]
     PublicKeyParseError(String),
 }
 
+/// Error struct that represents all the possible errors that can occur
+/// while trying to create a trustlist from a given JSON payload.
 #[derive(Error, Debug)]
 pub enum TrustListFromJsonError {
+    /// The given JSON is not an object
     #[error("The given JSON is not an object")]
     InvalidRootType,
+    /// The given key is not associated to an object
     #[error("Key '{0}' is not an object")]
     KeyIsNotObject(String),
+    /// A given key does not specify a public key algorithm
     #[error("Key '{0}' does not contain 'publicKeyAlgorithm'")]
     MissingPublicKeyAlgorithm(String),
+    /// A given key does not specifies the public key algorithm as a string
     #[error("'publicKeyAlgorithm' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithm(String),
+    /// A given key does not specify the name of the public key algorithm
     #[error("Key '{0}' does not contain 'publicKeyAlgorithm.name'")]
     MissingPublicKeyAlgorithmName(String),
+    /// A given key does not specifies the public key algorithm name as a string
     #[error("'publicKeyAlgorithm.name' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithmName(String),
+    /// A given key specifies a public key algorithm name that is not supported
+    // TODO: add RSA here once #2 is done
     #[error("Key '{0}' 'publicKeyAlgorithm.name' is '{1}' where only 'ECDSA' is supported")]
     UnsupportedPublicKeyAlgorithmName(String, String),
+    /// A given key does not contain 'publicKeyAlgorithm.namedCurve'
+    // TODO: We might have to revisit these errors if we want to support RSA (see #2)
     #[error("Key '{0}' does not contain 'publicKeyAlgorithm.namedCurve'")]
     MissingPublicKeyAlgorithmCurve(String),
+    /// A given key does not express 'publicKeyAlgorithm.namedCurve' as a string
     #[error("'publicKeyAlgorithm.namedCurve' for key '{0}' is not a string")]
     InvalidPublicKeyAlgorithmCurve(String),
+    /// A given key is using a 'publicKeyAlgorithm.namedCurve' that is not supported
     #[error("Key '{0}' 'publicKeyAlgorithm.namedCurve' is '{0}' where only 'P-256' is supported")]
     UnsupportedPublicKeyAlgorithmCurve(String, String),
+    /// A given key does not contain 'publicKeyPem'
     #[error("Key '{0}' does not contain 'publicKeyPem'")]
     MissingPublicKeyPem(String),
+    /// A given key does not express 'publicKeyPem' as a string
     #[error("'publicKeyPem' for key '{0}' is not a string")]
     InvalidPublicKeyPem(String),
+    /// A given key have a 'publicKeyPem' which cannot be correctly decoded using base64
     #[error("'publicKeyPem' for key '{0}' could not be decoded: {1}")]
     PublicKeyPemDecodeError(String, #[source] base64::DecodeError),
+    /// The kid of a given key could not be decoded using base64
     #[error("Cannot base64 decode key '{0}': {1}")]
     KidBase64DecodeError(String, #[source] base64::DecodeError),
+    /// A given key provided a public key that could not be parsed
     #[error("Cannot parse public key for key '{0}': {1}")]
     KeyParseError(String, #[source] KeyParseError),
 }
 
 impl TrustList {
+    /// Creates a new empty trustlist
     pub fn new() -> Self {
         TrustList {
             keys: HashMap::new(),
         }
     }
 
+    /// Adds a new public key to the trustlist
     pub fn add(&mut self, kid: &[u8], key: VerifyingKey) {
         self.keys.insert(kid.to_vec(), key);
     }
@@ -89,6 +120,7 @@ impl TrustList {
         Ok(())
     }
 
+    /// Adds a new public key from a base64 DER encoded string containing the public key
     pub fn add_key_from_str(
         &mut self,
         kid: &[u8],
