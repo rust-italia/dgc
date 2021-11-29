@@ -64,7 +64,7 @@ pub enum CwtParseError {
     SignatureNotBinary,
 }
 
-/// An enum representing varius EC signature algorithms.
+/// An enum representing varius [Elliptic Curve](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography) signature algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcAlg {
     /// Ecdsa256
