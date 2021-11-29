@@ -101,7 +101,7 @@ The following diagram represents how the information is organised once a certifi
 
 ## FAQ
 
-#### Is it legal to use this library?
+### Is it legal to use this library?
 
 You can certainly use this library to look into your own personal DGC (or the ones provided in the [official test dataset](https://github.com/eu-digital-green-certificates/dgc-testdata)).
 
