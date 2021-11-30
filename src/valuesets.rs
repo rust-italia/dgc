@@ -13,17 +13,27 @@ use std::borrow::Cow;
 /// ```
 /// # use dgc::lookup_value;
 /// #
-/// assert_eq!(lookup_value("AQ"), "Antarctica");
-/// assert_eq!(lookup_value("840539006"), "COVID-19");
-/// assert_eq!(lookup_value("LP217198-3"), "Rapid immunoassay");
-/// assert_eq!(lookup_value("EU/1/20/1528"), "Comirnaty");
-/// assert_eq!(lookup_value("value not in valueset"), "value not in valueset");
+/// let value = "AQ".into();
+/// lookup_value(&mut value);
+/// assert_eq!(value, "Antarctica");
+/// let value = "840539006".into();
+/// lookup_value(&mut value);
+/// assert_eq!(value, "COVID-19");
+/// let value = "LP217198-3".into()
+/// lookup_value(&mut value);
+/// assert_eq!(value, "Rapid immunoassay");
+/// let value = "EU/1/20/1528".into();
+/// lookup_value(&mut value);
+/// assert_eq!(value, "Comirnaty");
+/// let value = "value not in valueset".into();
+/// lookup_value(&mut value);
+/// assert_eq!(value, "value not in valueset");
 /// ```
-pub fn lookup_value(value_id: &str) -> Cow<'static, str> {
+pub fn lookup_value(value_id: &mut Cow<'static, str>) {
     // Populated from https://github.com/ehn-dcc-development/ehn-dcc-schema/tree/release/1.3.0/valuesets
     // List generated with the following Node.js snippet (for every valueset file):
     // > for (const [key, val] of Object.entries(fileData.valueSetValues)) { console.log(`"${key}" => Cow::Borrowed("${val.display}"),`) }
-    match value_id {
+    *value_id = match value_id.as_ref() {
         // https://github.com/ehn-dcc-development/ehn-dcc-schema/blob/release/1.3.0/valuesets/country-2-codes.json
         "AD" => Cow::Borrowed("Andorra"),
         "AE" => Cow::Borrowed("United Arab Emirates"),
@@ -387,6 +397,6 @@ pub fn lookup_value(value_id: &str) -> Cow<'static, str> {
         "1119305005" => Cow::Borrowed("SARS-CoV-2 antigen vaccine"),
         "1119349007" => Cow::Borrowed("SARS-CoV-2 mRNA vaccine"),
         "J07BX03" => Cow::Borrowed("covid-19 vaccines"),
-        _ => Cow::Owned(value_id.to_owned()),
+        _ => return,
     }
 }

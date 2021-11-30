@@ -3,7 +3,7 @@ use serde::{
     de::{MapAccess, Visitor},
     Deserialize, Serialize,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, borrow::Cow};
 
 const ISSUER: i64 = 1;
 const ISSUED_AT: i64 = 6;
@@ -15,7 +15,7 @@ const CERTS: i64 = -260;
 pub struct DgcContainer {
     /// The issuer of the data in the container
     #[serde(rename = "1")]
-    pub issuer: String,
+    pub issuer: Cow<'static, str>,
     /// A unix timestamp representing the moment in time when the data in the container was issued
     #[serde(rename = "6")]
     pub issued_at: IntegerOrFloat,
