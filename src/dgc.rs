@@ -157,9 +157,15 @@ mod tests {
         assert_eq!(cert.tests[0].name, Some("Roche LightCycler qPCR".into()));
         assert_eq!(cert.tests[0].manufacturer, Some("1232".into()));
         assert_eq!(cert.tests[0].date_of_collection, "2021-05-03T10:27:15Z");
-        assert_eq!(cert.tests[0].date_of_result, Some("2021-05-11T12:27:15Z".into()));
+        assert_eq!(
+            cert.tests[0].date_of_result,
+            Some("2021-05-11T12:27:15Z".into())
+        );
         assert_eq!(cert.tests[0].result, "260415000");
-        assert_eq!(cert.tests[0].testing_centre, Some("Policlinico Umberto I".into()));
+        assert_eq!(
+            cert.tests[0].testing_centre,
+            Some("Policlinico Umberto I".into())
+        );
         assert_eq!(cert.tests[0].country, "IT");
         assert_eq!(cert.tests[0].issuer, "IT");
         assert_eq!(cert.tests[0].id, "01IT053059F7676042D9BEE9F874C4901F9B#3");
@@ -202,16 +208,25 @@ mod tests {
         assert_eq!(cert.name.forename_standard, Some("MARILU<TERESA".into()));
         assert_eq!(cert.date_of_birth, "1977-06-16");
         assert_eq!(cert.tests[0].targeted_disease, "COVID-19");
-        assert_eq!(cert.tests[0].test_type, "Nucleic acid amplification with probe detection");
+        assert_eq!(
+            cert.tests[0].test_type,
+            "Nucleic acid amplification with probe detection"
+        );
         assert_eq!(cert.tests[0].name, Some("Roche LightCycler qPCR".into()));
         assert_eq!(
             cert.tests[0].manufacturer,
             Some("Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test".into())
         );
         assert_eq!(cert.tests[0].date_of_collection, "2021-05-03T10:27:15Z");
-        assert_eq!(cert.tests[0].date_of_result, Some("2021-05-11T12:27:15Z".into()));
+        assert_eq!(
+            cert.tests[0].date_of_result,
+            Some("2021-05-11T12:27:15Z".into())
+        );
         assert_eq!(cert.tests[0].result, "Not detected");
-        assert_eq!(cert.tests[0].testing_centre, Some("Policlinico Umberto I".into()));
+        assert_eq!(
+            cert.tests[0].testing_centre,
+            Some("Policlinico Umberto I".into())
+        );
         assert_eq!(cert.tests[0].country, "Italy");
         assert_eq!(cert.tests[0].issuer, "Italy");
         assert_eq!(cert.tests[0].id, "01IT053059F7676042D9BEE9F874C4901F9B#3");

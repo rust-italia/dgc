@@ -3,7 +3,7 @@ use serde::{
     de::{MapAccess, Visitor},
     Deserialize, Serialize,
 };
-use std::{collections::HashMap, borrow::Cow};
+use std::{borrow::Cow, collections::HashMap};
 
 const ISSUER: i64 = 1;
 const ISSUED_AT: i64 = 6;
