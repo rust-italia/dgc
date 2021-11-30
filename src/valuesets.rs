@@ -19,7 +19,7 @@ use std::borrow::Cow;
 /// let value = "840539006".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "COVID-19");
-/// let value = "LP217198-3".into()
+/// let value = "LP217198-3".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "Rapid immunoassay");
 /// let value = "EU/1/20/1528".into();
