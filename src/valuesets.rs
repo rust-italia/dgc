@@ -13,19 +13,19 @@ use std::borrow::Cow;
 /// ```
 /// # use dgc::lookup_value;
 /// #
-/// let value = "AQ".into();
+/// let mut value = "AQ".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "Antarctica");
-/// let value = "840539006".into();
+/// let mut value = "840539006".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "COVID-19");
-/// let value = "LP217198-3".into();
+/// let mut value = "LP217198-3".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "Rapid immunoassay");
-/// let value = "EU/1/20/1528".into();
+/// let mut value = "EU/1/20/1528".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "Comirnaty");
-/// let value = "value not in valueset".into();
+/// let mut value = "value not in valueset".into();
 /// lookup_value(&mut value);
 /// assert_eq!(value, "value not in valueset");
 /// ```
