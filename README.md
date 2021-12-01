@@ -99,6 +99,17 @@ The following diagram represents how the information is organised once a certifi
 [![Dgc data organisation diagram](https://github.com/rust-italia/dgc/raw/main/docs/certificate_structure.svg)](https://github.com/rust-italia/dgc/raw/main/docs/certificate_structure.svg)
 
 
+## FAQ
+
+### Is it legal to use this library?
+
+You can certainly use this library to look into your own personal DGC (or the ones provided in the [official test dataset](https://github.com/eu-digital-green-certificates/dgc-testdata)).
+
+If you are trying to use this library to look into certificates of arbitrarty individuals, you need to be aware that you will have access to privacy-sensitive personal information. Privacy-related regulation might limit you or prevent you from using this library (or the data acquired through this library). It is recommended to consult the relevant legal sources and authorities for any significant production use case.
+
+Note that this software is licensed under [MIT license](https://github.com/rust-italia/dgc/blob/main/LICENSE) and it is provided "as is". The authors of this library take no responsibility on any issue (especially legal ones) that might arise from using this library or the data acquired through it.
+
+
 ## Contributing
 
 Everyone is very welcome to contribute to this project.
