@@ -12,6 +12,8 @@ pub struct TrustList {
 }
 
 impl TrustList {
+    /// Returns the public key with the specified key identifier or
+    /// [`None`] if there is no key with that key ID.
     pub fn get_key(&self, kid: &[u8]) -> Option<&Vec<u8>> {
         self.keys.get(kid)
     }
@@ -93,6 +95,7 @@ impl TrustList {
         }
     }
 
+    /// Adds a raw public key to the [`TrustList`]
     pub fn add(&mut self, kid: &[u8], key: Vec<u8>) {
         self.keys.insert(kid.to_vec(), key);
     }
