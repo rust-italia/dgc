@@ -65,14 +65,31 @@ pub enum CwtParseError {
     SignatureNotBinary,
 }
 
-/// An enum representing varius [Elliptic Curve](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography) signature algorithms.
+/// An enum representing the supported signing verification algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcAlg {
     /// ECDSA w/ SHA-256
+    ///
+    /// [Elliptic Curve Digital Signature Algorithm][ecdsa] using the
+    /// [Secure Hash Algorithm 2][sha2] hash function
+    /// with digest size of 256 bits.
+    ///
+    /// [ecdsa]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+    /// [sha2]: https://en.wikipedia.org/wiki/SHA-2
     Es256,
     /// RSASSA-PSS w/ SHA-256
+    ///
+    /// [Rivest-Shamir-Adleman][rsa] signing algorithm using the
+    /// [Secure Hash Algorithm 2][sha2] hash function
+    /// with digest size of 256 bits.
+    ///
+    /// [rsa]: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+    /// [sha2]: https://en.wikipedia.org/wiki/SHA-2
     Ps256,
-    /// Unknown algorithm with a given identifier
+    /// Unknown algorithm
+    ///
+    /// The value is the COSE algorithm identifier defined by the IANA,
+    /// a complete list can be found [here](https://www.iana.org/assignments/cose/cose.xhtml)
     Unknown(i128),
 }
 
