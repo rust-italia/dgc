@@ -1,23 +1,6 @@
 use ring::digest;
-use std::{collections::HashMap, convert::TryFrom};
+use std::{collections::HashMap, convert::TryFrom, ops::Deref};
 use thiserror::Error;
-
-/// Struct used to index all the available public keys which
-/// can be used to validate the signature on a given certificate.
-///
-/// Keys are indexed by their `kid` (Key ID) which is an arbitrary sequence of bytes.
-#[derive(Debug)]
-pub struct TrustList {
-    keys: HashMap<Vec<u8>, Vec<u8>>,
-}
-
-impl TrustList {
-    /// Returns the public key with the specified key identifier or
-    /// [`None`] if there is no key with that key ID.
-    pub fn get_key(&self, kid: &[u8]) -> Option<&Vec<u8>> {
-        self.keys.get(kid)
-    }
-}
 
 /// Error struct that represents all the possible errors that can occur
 /// while trying to parse a public key.
@@ -87,7 +70,22 @@ pub enum TrustListFromJsonError {
     KeyParseError(String, #[source] KeyParseError),
 }
 
+/// Struct used to index all the available public keys which
+/// can be used to validate the signature on a given certificate.
+///
+/// Keys are indexed by their `kid` (Key ID) which is an arbitrary sequence of bytes.
+#[derive(Debug)]
+pub struct TrustList {
+    keys: HashMap<Vec<u8>, Vec<u8>>,
+}
+
 impl TrustList {
+    /// Returns the public key with the specified key identifier or
+    /// [`None`] if there is no key with that key ID.
+    pub fn get_key(&self, kid: &[u8]) -> Option<&[u8]> {
+        self.keys.get(kid).map(Vec::deref)
+    }
+
     /// Creates a new empty trustlist
     pub fn new() -> Self {
         TrustList {

@@ -677,6 +677,6 @@ fn test_case(#[case] test_file: &str) {
         let expected_verify = test_data["EXPECTEDRESULTS"]["EXPECTEDVERIFY"]
             .as_bool()
             .unwrap_or(true);
-        assert_eq!(dbg!(signature_validity).is_valid(), expected_verify);
+        assert_eq!(signature_validity.is_valid(), expected_verify);
     }
 }
