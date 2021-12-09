@@ -27,26 +27,26 @@ pub struct Vaccination {
     pub total_doses: usize,
     /// ISO8601 complete date: Date of Vaccination
     #[serde(rename = "dt")]
-    pub date: String,
+    pub date: Cow<'static, str>,
     /// Country of Vaccination
     #[serde(rename = "co")]
     pub country: Cow<'static, str>,
     /// Certificate Issuer
     #[serde(rename = "is")]
-    pub issuer: String,
+    pub issuer: Cow<'static, str>,
     /// Unique Certificate Identifier: UVCI
     #[serde(rename = "ci")]
-    pub id: String,
+    pub id: Cow<'static, str>,
 }
 
 impl Vaccination {
     /// Updates all the ids in the vaccination entry with their descriptive counterparts using
     /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.targeted_disease = lookup_value(&self.targeted_disease);
-        self.vaccine_prophylaxis = lookup_value(&self.vaccine_prophylaxis);
-        self.medicinal_product = lookup_value(&self.medicinal_product);
-        self.manufacturer = lookup_value(&self.manufacturer);
-        self.country = lookup_value(&self.country);
+        lookup_value(&mut self.targeted_disease);
+        lookup_value(&mut self.vaccine_prophylaxis);
+        lookup_value(&mut self.medicinal_product);
+        lookup_value(&mut self.manufacturer);
+        lookup_value(&mut self.country);
     }
 }

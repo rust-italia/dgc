@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{Recovery, Test, Vaccination};
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -6,16 +8,16 @@ use serde::{Deserialize, Deserializer, Serialize};
 pub struct DgcName {
     /// The forename(s) of the person addressed in the certificate
     #[serde(rename = "gn", skip_serializing_if = "Option::is_none")]
-    pub forename: Option<String>,
+    pub forename: Option<Cow<'static, str>>,
     /// The surname or primary name(s) of the person addressed in the certificate
     #[serde(rename = "fn", skip_serializing_if = "Option::is_none")]
-    pub surname: Option<String>,
+    pub surname: Option<Cow<'static, str>>,
     /// The forename(s) of the person, transliterated ICAO 9303
     #[serde(rename = "gnt", skip_serializing_if = "Option::is_none")]
-    pub forename_standard: Option<String>,
+    pub forename_standard: Option<Cow<'static, str>>,
     /// The surname(s) of the person, transliterated ICAO 9303
     #[serde(rename = "fnt")]
-    pub surname_standard: String,
+    pub surname_standard: Cow<'static, str>,
 }
 
 fn empty_if_null<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
@@ -32,13 +34,13 @@ where
 pub struct Dgc {
     /// The certificate version as per the published [schemas](https://github.com/ehn-dcc-development/ehn-dcc-schema).
     #[serde(rename = "ver")]
-    pub version: String,
+    pub version: Cow<'static, str>,
     /// The name of the person addressed in the DGC.
     #[serde(rename = "nam")]
     pub name: DgcName,
     /// Date of Birth of the person addressed in the DGC. ISO 8601 date format restricted to range 1900-2099 or empty
     #[serde(rename = "dob")]
-    pub date_of_birth: String,
+    pub date_of_birth: Cow<'static, str>,
     /// Test Group
     #[serde(
         rename = "t",
@@ -79,31 +81,29 @@ impl Dgc {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::Cow;
-
     use super::*;
 
     #[test]
     fn test_json_serialization() {
         let expected_json = "{\"ver\":\"1.3.0\",\"nam\":{\"gn\":\"ALSTON\",\"fn\":\"BLAKE\",\"gnt\":\"ALSTON\",\"fnt\":\"BLAKE\"},\"dob\":\"1990-01-01\",\"t\":[{\"tg\":\"840539006\",\"tt\":\"LP6464-4\",\"sc\":\"2021-10-09T12:03:12Z\",\"tr\":\"260415000\",\"tc\":\"Alhosn One Day Surgery\",\"co\":\"AE\",\"is\":\"Ministry of Health & Prevention\",\"ci\":\"URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06\"}]}";
         let cert = Dgc {
-            version: String::from("1.3.0"),
+            version: "1.3.0".into(),
             name: DgcName {
-                forename: Some(String::from("ALSTON")),
-                surname: Some(String::from("BLAKE")),
-                forename_standard: Some(String::from("ALSTON")),
-                surname_standard: String::from("BLAKE"),
+                forename: Some("ALSTON".into()),
+                surname: Some("BLAKE".into()),
+                forename_standard: Some("ALSTON".into()),
+                surname_standard: "BLAKE".into(),
             },
-            date_of_birth: String::from("1990-01-01"),
+            date_of_birth: "1990-01-01".into(),
             tests: vec![Test {
-                targeted_disease: Cow::from("840539006"),
-                test_type: Cow::from("LP6464-4"),
-                date_of_collection: String::from("2021-10-09T12:03:12Z"),
-                result: Cow::from("260415000"),
-                testing_centre: Some(String::from("Alhosn One Day Surgery")),
-                country: Cow::from("AE"),
-                issuer: Cow::from("Ministry of Health & Prevention"),
-                id: String::from("URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06"),
+                targeted_disease: "840539006".into(),
+                test_type: "LP6464-4".into(),
+                date_of_collection: "2021-10-09T12:03:12Z".into(),
+                result: "260415000".into(),
+                testing_centre: Some("Alhosn One Day Surgery".into()),
+                country: "AE".into(),
+                issuer: "Ministry of Health & Prevention".into(),
+                id: "URN:UVCI:V1:AE:8KST0RH057HI8XKW3M8K2NAD06".into(),
                 name: None,
                 manufacturer: None,
                 date_of_result: None,
@@ -146,41 +146,29 @@ mod tests {
           }
 "#;
         let cert: Dgc = serde_json::from_str(json_data).unwrap();
-        assert_eq!(cert.version, String::from("1.0.0"));
-        assert_eq!(cert.name.surname, Some(String::from("Di Caprio")));
-        assert_eq!(cert.name.surname_standard, String::from("DI<CAPRIO"));
-        assert_eq!(cert.name.forename, Some(String::from("Marilù Teresa")));
-        assert_eq!(
-            cert.name.forename_standard,
-            Some(String::from("MARILU<TERESA"))
-        );
-        assert_eq!(cert.date_of_birth, String::from("1977-06-16"));
-        assert_eq!(cert.tests[0].targeted_disease, String::from("840539006"));
-        assert_eq!(cert.tests[0].test_type, String::from("LP6464-4"));
-        assert_eq!(
-            cert.tests[0].name,
-            Some(String::from("Roche LightCycler qPCR"))
-        );
-        assert_eq!(cert.tests[0].manufacturer, Some(Cow::from("1232")));
-        assert_eq!(
-            cert.tests[0].date_of_collection,
-            String::from("2021-05-03T10:27:15Z")
-        );
+        assert_eq!(cert.version, "1.0.0");
+        assert_eq!(cert.name.surname, Some("Di Caprio".into()));
+        assert_eq!(cert.name.surname_standard, "DI<CAPRIO");
+        assert_eq!(cert.name.forename, Some("Marilù Teresa".into()));
+        assert_eq!(cert.name.forename_standard, Some("MARILU<TERESA".into()));
+        assert_eq!(cert.date_of_birth, "1977-06-16");
+        assert_eq!(cert.tests[0].targeted_disease, "840539006");
+        assert_eq!(cert.tests[0].test_type, "LP6464-4");
+        assert_eq!(cert.tests[0].name, Some("Roche LightCycler qPCR".into()));
+        assert_eq!(cert.tests[0].manufacturer, Some("1232".into()));
+        assert_eq!(cert.tests[0].date_of_collection, "2021-05-03T10:27:15Z");
         assert_eq!(
             cert.tests[0].date_of_result,
-            Some(String::from("2021-05-11T12:27:15Z"))
+            Some("2021-05-11T12:27:15Z".into())
         );
-        assert_eq!(cert.tests[0].result, String::from("260415000"));
+        assert_eq!(cert.tests[0].result, "260415000");
         assert_eq!(
             cert.tests[0].testing_centre,
-            Some(String::from("Policlinico Umberto I"))
+            Some("Policlinico Umberto I".into())
         );
-        assert_eq!(cert.tests[0].country, String::from("IT"));
-        assert_eq!(cert.tests[0].issuer, String::from("IT"));
-        assert_eq!(
-            cert.tests[0].id,
-            String::from("01IT053059F7676042D9BEE9F874C4901F9B#3")
-        );
+        assert_eq!(cert.tests[0].country, "IT");
+        assert_eq!(cert.tests[0].issuer, "IT");
+        assert_eq!(cert.tests[0].id, "01IT053059F7676042D9BEE9F874C4901F9B#3");
     }
 
     #[test]
@@ -213,48 +201,34 @@ mod tests {
 "#;
         let mut cert: Dgc = serde_json::from_str(json_data).unwrap();
         cert.expand_values();
-        assert_eq!(cert.version, String::from("1.0.0"));
-        assert_eq!(cert.name.surname, Some(String::from("Di Caprio")));
-        assert_eq!(cert.name.surname_standard, String::from("DI<CAPRIO"));
-        assert_eq!(cert.name.forename, Some(String::from("Marilù Teresa")));
-        assert_eq!(
-            cert.name.forename_standard,
-            Some(String::from("MARILU<TERESA"))
-        );
-        assert_eq!(cert.date_of_birth, String::from("1977-06-16"));
-        assert_eq!(cert.tests[0].targeted_disease, String::from("COVID-19"));
+        assert_eq!(cert.version, "1.0.0");
+        assert_eq!(cert.name.surname, Some("Di Caprio".into()));
+        assert_eq!(cert.name.surname_standard, "DI<CAPRIO");
+        assert_eq!(cert.name.forename, Some("Marilù Teresa".into()));
+        assert_eq!(cert.name.forename_standard, Some("MARILU<TERESA".into()));
+        assert_eq!(cert.date_of_birth, "1977-06-16");
+        assert_eq!(cert.tests[0].targeted_disease, "COVID-19");
         assert_eq!(
             cert.tests[0].test_type,
-            String::from("Nucleic acid amplification with probe detection")
+            "Nucleic acid amplification with probe detection"
         );
-        assert_eq!(
-            cert.tests[0].name,
-            Some(String::from("Roche LightCycler qPCR"))
-        );
+        assert_eq!(cert.tests[0].name, Some("Roche LightCycler qPCR".into()));
         assert_eq!(
             cert.tests[0].manufacturer,
-            Some(Cow::from(
-                "Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test"
-            ))
+            Some("Abbott Rapid Diagnostics, Panbio COVID-19 Ag Rapid Test".into())
         );
-        assert_eq!(
-            cert.tests[0].date_of_collection,
-            String::from("2021-05-03T10:27:15Z")
-        );
+        assert_eq!(cert.tests[0].date_of_collection, "2021-05-03T10:27:15Z");
         assert_eq!(
             cert.tests[0].date_of_result,
-            Some(String::from("2021-05-11T12:27:15Z"))
+            Some("2021-05-11T12:27:15Z".into())
         );
-        assert_eq!(cert.tests[0].result, String::from("Not detected"));
+        assert_eq!(cert.tests[0].result, "Not detected");
         assert_eq!(
             cert.tests[0].testing_centre,
-            Some(String::from("Policlinico Umberto I"))
+            Some("Policlinico Umberto I".into())
         );
-        assert_eq!(cert.tests[0].country, String::from("Italy"));
-        assert_eq!(cert.tests[0].issuer, String::from("Italy"));
-        assert_eq!(
-            cert.tests[0].id,
-            String::from("01IT053059F7676042D9BEE9F874C4901F9B#3")
-        );
+        assert_eq!(cert.tests[0].country, "Italy");
+        assert_eq!(cert.tests[0].issuer, "Italy");
+        assert_eq!(cert.tests[0].id, "01IT053059F7676042D9BEE9F874C4901F9B#3");
     }
 }

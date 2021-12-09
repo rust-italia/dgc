@@ -18,23 +18,23 @@ pub struct Recovery {
     pub country: Cow<'static, str>,
     /// Certificate Issuer
     #[serde(rename = "is")]
-    pub issuer: String,
+    pub issuer: Cow<'static, str>,
     /// ISO 8601 complete date: Certificate Valid From
     #[serde(rename = "df")]
-    pub valid_from: String,
+    pub valid_from: Cow<'static, str>,
     /// ISO 8601 complete date: Certificate Valid Until
     #[serde(rename = "du")]
-    pub valid_until: String,
+    pub valid_until: Cow<'static, str>,
     /// Unique Certificate Identifier, UVCI
     #[serde(rename = "ci")]
-    pub id: String,
+    pub id: Cow<'static, str>,
 }
 
 impl Recovery {
     /// Updates all the ids in the recovery entry with their descriptive counterparts using
     /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.targeted_disease = lookup_value(&self.targeted_disease);
-        self.country = lookup_value(&self.country);
+        lookup_value(&mut self.targeted_disease);
+        lookup_value(&mut self.country);
     }
 }

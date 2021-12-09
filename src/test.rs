@@ -15,23 +15,23 @@ pub struct Test {
     pub test_type: Cow<'static, str>,
     /// NAA Test Name
     #[serde(rename = "nm", skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
+    pub name: Option<Cow<'static, str>>,
     /// RAT Test name and manufacturer
     #[serde(rename = "ma", skip_serializing_if = "Option::is_none")]
     pub manufacturer: Option<Cow<'static, str>>,
     /// Date/Time of Sample Collection
     #[serde(rename = "sc")]
-    pub date_of_collection: String,
+    pub date_of_collection: Cow<'static, str>,
     /// Date/Time of Test Result
     /// Deprecated in v1.3.0 of the schema
     #[serde(rename = "dr", skip_serializing_if = "Option::is_none")]
-    pub date_of_result: Option<String>,
+    pub date_of_result: Option<Cow<'static, str>>,
     /// Test Result
     #[serde(rename = "tr")]
     pub result: Cow<'static, str>,
     /// Testing Centre
     #[serde(rename = "tc", skip_serializing_if = "Option::is_none")]
-    pub testing_centre: Option<String>,
+    pub testing_centre: Option<Cow<'static, str>>,
     /// Country of Test
     #[serde(rename = "co")]
     pub country: Cow<'static, str>,
@@ -40,20 +40,20 @@ pub struct Test {
     pub issuer: Cow<'static, str>,
     /// Unique Certificate Identifier, UVCI
     #[serde(rename = "ci")]
-    pub id: String,
+    pub id: Cow<'static, str>,
 }
 
 impl Test {
     /// Updates all the ids in the test entry with their descriptive counterparts using
     /// the official valueset.
     pub fn expand_values(&mut self) {
-        self.targeted_disease = lookup_value(&self.targeted_disease);
-        self.test_type = lookup_value(&self.test_type);
-        self.result = lookup_value(&self.result);
-        if let Some(ma) = &mut self.manufacturer {
-            *ma = lookup_value(ma);
+        lookup_value(&mut self.targeted_disease);
+        lookup_value(&mut self.test_type);
+        lookup_value(&mut self.result);
+        if let Some(ma) = self.manufacturer.as_mut() {
+            lookup_value(ma);
         }
-        self.country = lookup_value(&self.country);
-        self.issuer = lookup_value(&self.issuer);
+        lookup_value(&mut self.country);
+        lookup_value(&mut self.issuer);
     }
 }
