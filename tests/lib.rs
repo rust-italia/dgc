@@ -61,11 +61,8 @@ use std::path::PathBuf;
 #[case::bg_2dcode_raw_3_json("BG/2DCode/raw/3.json")]
 #[case::bg_2dcode_raw_4_json("BG/2DCode/raw/4.json")]
 #[case::bg_2dcode_raw_5_json("BG/2DCode/raw/5.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::ch_2dcode_raw_1_json("CH/2DCode/raw/1.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::ch_2dcode_raw_2_json("CH/2DCode/raw/2.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::ch_2dcode_raw_3_json("CH/2DCode/raw/3.json")]
 #[case::cy_2dcode_raw_5_json("CY/2DCode/raw/5.json")]
 #[case::cy_2dcode_raw_6_json("CY/2DCode/raw/6.json")]
@@ -95,11 +92,8 @@ use std::path::PathBuf;
 #[case::dk_2dcode_raw_5_json("DK/2DCode/raw/5.json")]
 #[case::dk_2dcode_raw_7_json("DK/2DCode/raw/7.json")]
 #[case::dk_2dcode_raw_8_json("DK/2DCode/raw/8.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::es_2dcode_raw_1001_json("ES/2DCode/raw/1001.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::es_2dcode_raw_1002_json("ES/2DCode/raw/1002.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::es_2dcode_raw_1003_json("ES/2DCode/raw/1003.json")]
 #[case::es_2dcode_raw_101_json("ES/2DCode/raw/101.json")]
 #[case::es_2dcode_raw_102_json("ES/2DCode/raw/102.json")]
@@ -116,11 +110,11 @@ use std::path::PathBuf;
 #[case::es_2dcode_raw_2101_json("ES/2DCode/raw/2101.json")]
 #[case::es_2dcode_raw_2102_json("ES/2DCode/raw/2102.json")]
 #[case::es_2dcode_raw_2103_json("ES/2DCode/raw/2103.json")]
-#[ignore = "RSA signature. See #2"]
+#[ignore = "Key is P-384. See #34"]
 #[case::es_2dcode_raw_401_json("ES/2DCode/raw/401.json")]
-#[ignore = "RSA signature. See #2"]
+#[ignore = "Key is P-384. See #34"]
 #[case::es_2dcode_raw_402_json("ES/2DCode/raw/402.json")]
-#[ignore = "RSA signature. See #2"]
+#[ignore = "Key is P-384. See #34"]
 #[case::es_2dcode_raw_403_json("ES/2DCode/raw/403.json")]
 #[case::es_2dcode_raw_501_json("ES/2DCode/raw/501.json")]
 #[case::es_2dcode_raw_502_json("ES/2DCode/raw/502.json")]
@@ -208,13 +202,9 @@ use std::path::PathBuf;
 #[case::li_2dcode_raw_2_json("LI/2DCode/raw/2.json")]
 #[case::li_2dcode_raw_3_json("LI/2DCode/raw/3.json")]
 #[case::li_2dcode_raw_4_json("LI/2DCode/raw/4.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::lt_2dcode_raw_1_json("LT/2DCode/raw/1.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::lt_2dcode_raw_2_json("LT/2DCode/raw/2.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::lt_2dcode_raw_3_json("LT/2DCode/raw/3.json")]
-#[ignore = "RSA signature. See #2"]
 #[case::lt_2dcode_raw_4_json("LT/2DCode/raw/4.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_naat_json("LU/2DCode/raw/INCERT_R_DCC_NAAT.json")]
 #[case::lu_2dcode_raw_incert_r_dcc_rat_json("LU/2DCode/raw/INCERT_R_DCC_RAT.json")]
@@ -679,19 +669,9 @@ fn test_case(#[case] test_file: &str) {
     if test_data["TESTCTX"].get("CERTIFICATE").is_some() {
         let mut trustlist = TrustList::default();
 
-        let add_key_result = trustlist
-            .add_key_from_certificate(test_data["TESTCTX"]["CERTIFICATE"].as_str().unwrap());
-
-        // if the key is RSA skip the test (only EC supported)
-        let testctx_description = test_data["TESTCTX"]["DESCRIPTION"].as_str().unwrap_or("");
-        // TODO: change this once RSA is supported (see #2)
-        if testctx_description.contains("RSA") {
-            assert!(matches!(
-                add_key_result,
-                Err(KeyParseError::PublicKeyParseError(_))
-            ));
-            return;
-        }
+        trustlist
+            .add_key_from_certificate(test_data["TESTCTX"]["CERTIFICATE"].as_str().unwrap())
+            .unwrap();
 
         let (_, signature_validity) = validate(raw_hcert, &trustlist).unwrap();
         let expected_verify = test_data["EXPECTEDRESULTS"]["EXPECTEDVERIFY"]

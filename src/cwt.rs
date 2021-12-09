@@ -14,9 +14,10 @@ const COSE_SIGN1_CBOR_TAG: u64 = 18;
 const CBOR_WEB_TOKEN_TAG: u64 = 61;
 const COSE_HEADER_KEY_KID: i128 = 4;
 const COSE_HEADER_KEY_ALG: i128 = 1;
-const COSE_ECDSA256: i128 = -7;
-const COSE_ECDSA384: i128 = -35;
-const COSE_ECDSA512: i128 = -36;
+/// COSE key for ECDSA w/ SHA-256
+const COSE_ES256: i128 = -7;
+/// COSE key for RSASSA-PSS w/ SHA-256
+const COSE_PS256: i128 = -37;
 
 /// An enum representing all the possible errors that can occur while trying
 /// to parse data representing a CWT ([CBOR Web Token](https://datatracker.ietf.org/doc/html/rfc8392)).
@@ -64,16 +65,31 @@ pub enum CwtParseError {
     SignatureNotBinary,
 }
 
-/// An enum representing varius [Elliptic Curve](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography) signature algorithms.
+/// An enum representing the supported signing verification algorithms.
 #[derive(Debug, PartialEq, Eq)]
 pub enum EcAlg {
-    /// Ecdsa256
-    Ecdsa256, // -7
-    /// Ecdsa384
-    Ecdsa384, // -35
-    /// Ecdsa512
-    Ecdsa512, // -36
-    /// Unknown algorithm with a given identifier
+    /// ECDSA w/ SHA-256
+    ///
+    /// [Elliptic Curve Digital Signature Algorithm][ecdsa] using the
+    /// [Secure Hash Algorithm 2][sha2] hash function
+    /// with digest size of 256 bits.
+    ///
+    /// [ecdsa]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+    /// [sha2]: https://en.wikipedia.org/wiki/SHA-2
+    Es256,
+    /// RSASSA-PSS w/ SHA-256
+    ///
+    /// [Rivest-Shamir-Adleman][rsa] signing algorithm using the
+    /// [Secure Hash Algorithm 2][sha2] hash function
+    /// with digest size of 256 bits.
+    ///
+    /// [rsa]: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+    /// [sha2]: https://en.wikipedia.org/wiki/SHA-2
+    Ps256,
+    /// Unknown algorithm
+    ///
+    /// The value is the COSE algorithm identifier defined by the IANA,
+    /// a complete list can be found [here](https://www.iana.org/assignments/cose/cose.xhtml)
     Unknown(i128),
 }
 
@@ -81,9 +97,8 @@ impl From<Integer> for EcAlg {
     fn from(i: Integer) -> Self {
         let u: i128 = i.into();
         match u {
-            COSE_ECDSA256 => EcAlg::Ecdsa256,
-            COSE_ECDSA384 => EcAlg::Ecdsa384,
-            COSE_ECDSA512 => EcAlg::Ecdsa512,
+            COSE_ES256 => EcAlg::Es256,
+            COSE_PS256 => EcAlg::Ps256,
             _ => EcAlg::Unknown(u),
         }
     }
@@ -306,7 +321,7 @@ mod tests {
         let raw_hex_cose_data = "d2844da204481c10ebbbc49f78310126a0590111a4041a61657980061a6162d90001624145390103a101a4617481a862736374323032312d31302d30395431323a30333a31325a627474684c50363436342d3462746376416c686f736e204f6e6520446179205375726765727962636f624145626369782955524e3a555643493a56313a41453a384b5354305248303537484938584b57334d384b324e41443036626973781f4d696e6973747279206f66204865616c746820262050726576656e74696f6e6274676938343035333930303662747269323630343135303030636e616da463666e7465424c414b4562666e65424c414b4563676e7466414c53544f4e62676e66414c53544f4e6376657265312e332e3063646f626a313939302d30312d3031584034fc1cee3c4875c18350d24ccd24dd67ce1bda84f5db6b26b4b8a97c8336e159294859924afa7894a45a5af07a8cf536a36be67912d79f5a93540b86bb7377fb";
         let expected_sig_structure = "846a5369676e6174757265314da204481c10ebbbc49f7831012640590111a4041a61657980061a6162d90001624145390103a101a4617481a862736374323032312d31302d30395431323a30333a31325a627474684c50363436342d3462746376416c686f736e204f6e6520446179205375726765727962636f624145626369782955524e3a555643493a56313a41453a384b5354305248303537484938584b57334d384b324e41443036626973781f4d696e6973747279206f66204865616c746820262050726576656e74696f6e6274676938343035333930303662747269323630343135303030636e616da463666e7465424c414b4562666e65424c414b4563676e7466414c53544f4e62676e66414c53544f4e6376657265312e332e3063646f626a313939302d30312d3031";
         let expected_kid: Vec<u8> = vec![28, 16, 235, 187, 196, 159, 120, 49];
-        let expected_alg = EcAlg::Ecdsa256;
+        let expected_alg = EcAlg::Es256;
         let raw_cose_data = hex::decode(raw_hex_cose_data).unwrap();
 
         let cwt: Cwt = raw_cose_data.as_slice().try_into().unwrap();

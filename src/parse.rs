@@ -1,5 +1,5 @@
 use crate::{Cwt, CwtParseError, DgcContainer, EcAlg, TrustList};
-use ring_compat::signature::Verifier;
+use ring::signature;
 use std::{convert::TryInto, fmt::Display};
 use thiserror::Error;
 
@@ -163,17 +163,6 @@ pub fn validate(
         Some(kid) => kid,
     };
 
-    match cwt.header.alg {
-        None => return Ok((cwt.payload, SignatureValidity::MissingSigningAlgorithm)),
-        Some(EcAlg::Ecdsa256) => {}
-        Some(alg) => {
-            return Ok((
-                cwt.payload,
-                SignatureValidity::UnsupportedSigningAlgorithm(format!("{:?}", alg)),
-            ))
-        }
-    };
-
     let key = match trustlist.get_key(kid) {
         None => {
             return Ok((
@@ -184,12 +173,28 @@ pub fn validate(
         Some(key) => key,
     };
 
-    let signature = match cwt.signature.as_slice().try_into() {
-        Err(_) => return Ok((cwt.payload, SignatureValidity::SignatureMalformed)),
-        Ok(signature) => signature,
+    let signature = &cwt.signature;
+    let data = cwt.make_sig_structure();
+    let result = match cwt.header.alg {
+        None => return Ok((cwt.payload, SignatureValidity::MissingSigningAlgorithm)),
+        Some(alg) => match alg {
+            EcAlg::Es256 => {
+                signature::UnparsedPublicKey::new(&signature::ECDSA_P256_SHA256_FIXED, key)
+                    .verify(&data, signature)
+            }
+            EcAlg::Ps256 => {
+                signature::UnparsedPublicKey::new(&signature::RSA_PSS_2048_8192_SHA256, key)
+                    .verify(&data, signature)
+            }
+            EcAlg::Unknown(alg) => {
+                return Ok((
+                    cwt.payload,
+                    SignatureValidity::UnsupportedSigningAlgorithm(format!("{:?}", alg)),
+                ))
+            }
+        },
     };
-
-    match key.verify(cwt.make_sig_structure().as_slice(), &signature) {
+    match result {
         Err(_) => Ok((cwt.payload, SignatureValidity::Invalid)),
         Ok(_) => Ok((cwt.payload, SignatureValidity::Valid)),
     }
@@ -289,11 +294,11 @@ mod tests {
     fn it_validates() {
         let data = "HC1:6BFOXN%TS3DH0YOJ58S S-W5HDC *M0II5XHC9B5G2+$N IOP-IA%NFQGRJPC%OQHIZC4.OI1RM8ZA.A5:S9MKN4NN3F85QNCY0O%0VZ001HOC9JU0D0HT0HB2PL/IB*09B9LW4T*8+DCMH0LDK2%K:XFE70*LP$V25$0Q:J:4MO1P0%0L0HD+9E/HY+4J6TH48S%4K.GJ2PT3QY:GQ3TE2I+-CPHN6D7LLK*2HG%89UV-0LZ 2ZJJ524-LH/CJTK96L6SR9MU9DHGZ%P WUQRENS431T1XCNCF+47AY0-IFO0500TGPN8F5G.41Q2E4T8ALW.INSV$ 07UV5SR+BNQHNML7 /KD3TU 4V*CAT3ZGLQMI/XI%ZJNSBBXK2:UG%UJMI:TU+MMPZ5$/PMX19UE:-PSR3/$NU44CBE6DQ3D7B0FBOFX0DV2DGMB$YPF62I$60/F$Z2I6IFX21XNI-LM%3/DF/U6Z9FEOJVRLVW6K$UG+BKK57:1+D10%4K83F+1VWD1NE";
         let kid: Vec<u8> = vec![57, 48, 23, 104, 205, 218, 5, 19];
-        let key_data = "A0IABDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aY=";
+        let key_data = "BDSp7t86JxAmjZFobmmu0wkii53snRuwqVWe3/g/wVz9i306XA5iXpHkRPZVUkSZmYhutMDrheg6sfwMRdql3aY=";
 
         let mut trustlist = TrustList::new();
         trustlist
-            .add_key_from_str(kid.as_slice(), key_data)
+            .add_key_from_base64(kid.as_slice(), key_data)
             .unwrap();
 
         let (_, signature_validity) = validate(data, &trustlist).unwrap();
