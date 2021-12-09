@@ -1,6 +1,6 @@
 [package]
 name = "dgc"
-version = "0.0.6"
+version = "0.0.7"
 authors = ["Luciano Mammino"]
 edition = "2018"
 description = "A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass"
