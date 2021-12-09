@@ -20,11 +20,6 @@ A parser and validator for the **EU Digital Green Certificate (dgc)** a.k.a. _gr
   - Offers utilities for easily populate a Trustlist from various types of keys and apis
 
 
-Current limitations:
-
-  - It only supports EC signatures (see [#2](https://github.com/rust-italia/dgc/issues/2))
-
-
 ## Usage
 
 To install the latest version of `dgc`, add this to your Cargo.toml:
