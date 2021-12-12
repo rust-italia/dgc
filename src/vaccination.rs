@@ -56,8 +56,8 @@ impl fmt::Display for Vaccination {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Vaccinated with {} of {} doses on {}. Issued by {}",
-            self.dose_number, self.total_doses, self.date, self.issuer
+            "Vaccinated against {} with {} of {} doses on {}. Issued by {}",
+            self.targeted_disease, self.dose_number, self.total_doses, self.date, self.issuer
         )
     }
 }

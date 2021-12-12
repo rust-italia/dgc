@@ -44,8 +44,8 @@ impl fmt::Display for Recovery {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Recovered on {}. Issued by {}",
-            self.result_date, self.issuer
+            "Recovered from {} on {}. Issued by {}",
+            self.targeted_disease, self.result_date, self.issuer
         )
     }
 }
