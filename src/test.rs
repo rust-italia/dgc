@@ -61,7 +61,7 @@ impl Test {
 
 impl fmt::Display for Test {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(
+        write!(
             f,
             "Tested {} on {}. Issued by {}",
             self.result, self.date_of_collection, self.issuer

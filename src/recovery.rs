@@ -42,7 +42,7 @@ impl Recovery {
 
 impl fmt::Display for Recovery {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(
+        write!(
             f,
             "Recovered on {}. Issued by {}",
             self.result_date, self.issuer

@@ -261,4 +261,38 @@ mod tests {
         assert_eq!(cert.tests[0].issuer, "Italy");
         assert_eq!(cert.tests[0].id, "01IT053059F7676042D9BEE9F874C4901F9B#3");
     }
+
+    #[test]
+    fn test_json_deserialization_and_display() {
+        let json_data = r#"{
+            "ver": "1.0.0",
+            "nam": {
+              "fn": "Di Caprio",
+              "fnt": "DI<CAPRIO",
+              "gn": "Marilù Teresa",
+              "gnt": "MARILU<TERESA"
+            },
+            "dob": "1977-06-16",
+            "t": [
+              {
+                "tg": "840539006",
+                "tt": "LP6464-4",
+                "nm": "Roche LightCycler qPCR",
+                "ma": "1232",
+                "sc": "2021-05-03T10:27:15Z",
+                "dr": "2021-05-11T12:27:15Z",
+                "tr": "260415000",
+                "tc": "Policlinico Umberto I",
+                "co": "IT",
+                "is": "IT",
+                "ci": "01IT053059F7676042D9BEE9F874C4901F9B#3"
+              }
+            ]
+          }
+"#;
+        let mut cert: Dgc = serde_json::from_str(json_data).unwrap();
+        cert.expand_values();
+	let display = format!("{}", cert);
+	assert_eq!(display, "Marilù Teresa Di Caprio (1977-06-16)\nTested Not detected on 2021-05-03T10:27:15Z. Issued by Italy\n");
+    }
 }
