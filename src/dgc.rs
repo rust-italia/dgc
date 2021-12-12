@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt;
 
 use crate::{Recovery, Test, Vaccination};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -22,12 +23,12 @@ pub struct DgcName {
 
 impl fmt::Display for DgcName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-	match (self.forename, self.surname) {
-	    (Some(forename), Some(surname)) => write!(f, "{} {}", forename, surname),
-	    (Some(forename), None) => write!(f, "{}", forename),
-	    (None, Some(surname)) => write!(f, "{}", surname),
-	    (None, None) => write!(f, "{}", surname_standard)
-	}
+        match (self.forename.as_ref(), self.surname.as_ref()) {
+            (Some(forename), Some(surname)) => write!(f, "{} {}", forename, surname),
+            (Some(forename), None) => write!(f, "{}", forename),
+            (None, Some(surname)) => write!(f, "{}", surname),
+            (None, None) => write!(f, "{}", self.surname_standard),
+        }
     }
 }
 
@@ -76,6 +77,24 @@ pub struct Dgc {
         deserialize_with = "empty_if_null"
     )]
     pub recoveries: Vec<Recovery>,
+}
+
+impl fmt::Display for Dgc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{} ({})", self.name, self.date_of_birth)?;
+        for test in &self.tests {
+            writeln!(f, "{}", test)?;
+        }
+
+        for vaccine in &self.vaccines {
+            writeln!(f, "{}", vaccine)?;
+        }
+
+        for recovery in &self.recoveries {
+            writeln!(f, "{}", recovery)?;
+        }
+        Ok(())
+    }
 }
 
 impl Dgc {
