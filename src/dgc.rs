@@ -20,6 +20,17 @@ pub struct DgcName {
     pub surname_standard: Cow<'static, str>,
 }
 
+impl fmt::Display for DgcName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+	match (self.forename, self.surname) {
+	    (Some(forename), Some(surname)) => write!(f, "{} {}", forename, surname),
+	    (Some(forename), None) => write!(f, "{}", forename),
+	    (None, Some(surname)) => write!(f, "{}", surname),
+	    (None, None) => write!(f, "{}", surname_standard)
+	}
+    }
+}
+
 fn empty_if_null<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
 where
     D: Deserializer<'de>,
