@@ -292,7 +292,7 @@ mod tests {
 "#;
         let mut cert: Dgc = serde_json::from_str(json_data).unwrap();
         cert.expand_values();
-	let display = format!("{}", cert);
-	assert_eq!(display, "Marilù Teresa Di Caprio (1977-06-16)\nTested Not detected on 2021-05-03T10:27:15Z. Issued by Italy\n");
+        let display = format!("{}", cert);
+        assert_eq!(display, "Marilù Teresa Di Caprio (1977-06-16)\nTEST: COVID-19 Not detected on 2021-05-03T10:27:15Z. Issued by Italy\n");
     }
 }

@@ -63,8 +63,8 @@ impl fmt::Display for Test {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Tested {} on {}. Issued by {}",
-            self.result, self.date_of_collection, self.issuer
+            "TEST: {} {} on {}. Issued by {}",
+            self.targeted_disease, self.result, self.date_of_collection, self.issuer
         )
     }
 }
