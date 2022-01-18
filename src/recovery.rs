@@ -1,6 +1,7 @@
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fmt;
 
 /// A recovery entry.
 ///
@@ -36,5 +37,15 @@ impl Recovery {
     pub fn expand_values(&mut self) {
         lookup_value(&mut self.targeted_disease);
         lookup_value(&mut self.country);
+    }
+}
+
+impl fmt::Display for Recovery {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Recovered from {} on {}. Issued by {}",
+            self.targeted_disease, self.result_date, self.issuer
+        )
     }
 }

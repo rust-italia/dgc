@@ -1,6 +1,7 @@
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fmt;
 
 /// A vaccination entry.
 ///
@@ -48,5 +49,15 @@ impl Vaccination {
         lookup_value(&mut self.medicinal_product);
         lookup_value(&mut self.manufacturer);
         lookup_value(&mut self.country);
+    }
+}
+
+impl fmt::Display for Vaccination {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Vaccinated against {} with {} of {} doses on {}. Issued by {}",
+            self.targeted_disease, self.dose_number, self.total_doses, self.date, self.issuer
+        )
     }
 }

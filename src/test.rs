@@ -1,6 +1,7 @@
 use crate::lookup_value;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::fmt;
 
 /// A test entry.
 ///
@@ -55,5 +56,15 @@ impl Test {
         }
         lookup_value(&mut self.country);
         lookup_value(&mut self.issuer);
+    }
+}
+
+impl fmt::Display for Test {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "TEST: {} {} on {}. Issued by {}",
+            self.targeted_disease, self.result, self.date_of_collection, self.issuer
+        )
     }
 }
