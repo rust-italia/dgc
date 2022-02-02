@@ -10,53 +10,85 @@ fn settings() {
         serde_json::from_str::<Settings>(RAW_SETTINGS).unwrap(),
         Settings {
             vaccines: Vaccines {
-                jensen: VaccineSettings {
-                    start_day_complete: 15,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 180,
+                janssen: VaccineSettings {
+                    complete: Interval {
+                        start_day: 15,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 180,
+                    }
                 },
                 vaxzevria: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 84,
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 84,
+                    }
                 },
                 spikevax: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 42,
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 42,
+                    }
                 },
                 comirnaty: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 42,
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 42,
+                    }
                 },
-                covi_shield: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 84,
+                covishield: VaccineSettings {
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 84,
+                    }
                 },
                 r_covi: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 84,
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 84,
+                    }
                 },
                 recombinant: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 84,
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 84,
+                    }
                 },
-                sputnik: VaccineSettings {
-                    start_day_complete: 0,
-                    end_day_complete: 180,
-                    start_day_not_complete: 15,
-                    end_day_not_complete: 21,
+                sputnik_v: VaccineSettings {
+                    complete: Interval {
+                        start_day: 0,
+                        end_day: 180,
+                    },
+                    not_complete: Interval {
+                        start_day: 15,
+                        end_day: 21,
+                    }
                 }
             },
             deny_list: DenyList(Cow::Borrowed(

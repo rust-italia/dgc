@@ -10,14 +10,29 @@ use serde::{
 /// The URL from which the settings can be retrieved in JSON format.
 pub const URL: &str = "https://get.dgc.gov.it/v1/dgc/settings";
 
+/// A typed representation of the settings exposed from [official APIs](URL).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Settings<'a> {
+    /// Settings for approved vaccines.
     pub vaccines: Vaccines,
+
+    /// A list of Unique Vaccination Certificate/Assertion Identifiers (UVCIs) that must be
+    /// considered invalid.
     pub deny_list: DenyList<'a>,
+
+    /// Minimal app versions by OS.
     pub min_versions: MinVersions<'a>,
+
+    /// Settings for COVID-19 tests.
     pub tests: Tests,
+
+    /// Interval settings related to recoveries.
     pub recovery: Recovery,
+
+    /// Interval settings related to generic vaccine.
     pub generic_vaccine: GenericVaccine,
+
+    /// A list of unknown settings.
     pub unknown: Vec<RawSetting<'a>>,
 }
 
@@ -38,26 +53,26 @@ impl<'a> PartialSettings<'a> {
         use SettingType::*;
 
         Some(match ty {
-            JensenVaccine | VaxzevriaVaccine | SpikevaxVaccine | ComirnatyVaccine
-            | CoviShieldVaccine | RCoviVaccine | RecombinantVaccine | SputnikVaccine => {
+            JanssenVaccine | VaxzevriaVaccine | SpikevaxVaccine | ComirnatyVaccine
+            | CovishieldVaccine | RCoviVaccine | RecombinantVaccine | SputnikVVaccine => {
                 let vaccines = &mut self.vaccines;
                 let vaccine = match ty {
-                    JensenVaccine => &mut vaccines.jensen,
+                    JanssenVaccine => &mut vaccines.janssen,
                     VaxzevriaVaccine => &mut vaccines.vaxzevria,
                     SpikevaxVaccine => &mut vaccines.spikevax,
                     ComirnatyVaccine => &mut vaccines.comirnaty,
-                    CoviShieldVaccine => &mut vaccines.covi_shield,
+                    CovishieldVaccine => &mut vaccines.covi_shield,
                     RCoviVaccine => &mut vaccines.r_covi,
                     RecombinantVaccine => &mut vaccines.recombinant,
-                    SputnikVaccine => &mut vaccines.sputnik,
+                    SputnikVVaccine => &mut vaccines.sputnik_v,
                     Generic | AppMinVersion | DenyList => unreachable!(),
                 };
 
                 InnerField::U16(match name {
-                    VaccineStartDayComplete => &mut vaccine.start_day_complete,
-                    VaccineEndDayComplete => &mut vaccine.end_day_complete,
-                    VaccineStartDayNotComplete => &mut vaccine.start_day_not_complete,
-                    VaccineEndDayNotComplete => &mut vaccine.end_day_not_complete,
+                    VaccineStartDayComplete => &mut vaccine.complete.start_day,
+                    VaccineEndDayComplete => &mut vaccine.complete.end_day,
+                    VaccineStartDayNotComplete => &mut vaccine.not_complete.start_day,
+                    VaccineEndDayNotComplete => &mut vaccine.not_complete.end_day,
                     _ => return None,
                 })
             }
@@ -331,9 +346,13 @@ impl<'de: 'a, 'a> Deserialize<'de> for Settings<'a> {
     }
 }
 
+/// An invalid pair of name and type parameters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct InvalidSetting {
+    /// The name of the setting.
     pub name: SettingName,
+
+    /// The type of the setting.
     pub ty: SettingType,
 }
 
@@ -361,28 +380,44 @@ pub struct RawSetting<'a> {
     pub value: Cow<'a, str>,
 }
 
+/// A list of vaccine settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Vaccines {
-    pub jensen: VaccineSettings,
+    /// COVID-19 vaccine Janssen (EU/1/20/1525)
+    pub janssen: VaccineSettings,
+
+    /// Vaxzevria vaccine (EU/1/21/1529)
     pub vaxzevria: VaccineSettings,
+
+    /// Spikevax vaccine (EU/1/20/1507)
     pub spikevax: VaccineSettings,
+
+    /// Comirnaty vaccine (EU/1/20/1528)
     pub comirnaty: VaccineSettings,
-    pub covi_shield: VaccineSettings,
+
+    /// Covishield vaccine
+    pub covishield: VaccineSettings,
+
+    /// R-CoVI vaccine
     pub r_covi: VaccineSettings,
+
+    /// Covid-19 (recombinant) vaccine
     pub recombinant: VaccineSettings,
-    pub sputnik: VaccineSettings,
+
+    /// Sputnik-V vaccine
+    pub sputnik_v: VaccineSettings,
 }
 
 #[derive(Debug, Default)]
 struct PartialVaccines {
-    jensen: PartialVaccineSettings,
+    janssen: PartialVaccineSettings,
     vaxzevria: PartialVaccineSettings,
     spikevax: PartialVaccineSettings,
     comirnaty: PartialVaccineSettings,
     covi_shield: PartialVaccineSettings,
     r_covi: PartialVaccineSettings,
     recombinant: PartialVaccineSettings,
-    sputnik: PartialVaccineSettings,
+    sputnik_v: PartialVaccineSettings,
 }
 
 impl PartialVaccines {
@@ -390,102 +425,96 @@ impl PartialVaccines {
         use SettingType::*;
 
         let Self {
-            jensen,
+            janssen,
             vaxzevria,
             spikevax,
             comirnaty,
             covi_shield,
             r_covi,
             recombinant,
-            sputnik,
+            sputnik_v,
         } = self;
 
-        let jensen = jensen.into_complete(JensenVaccine)?;
+        let janssen = janssen.into_complete(JanssenVaccine)?;
         let vaxzevria = vaxzevria.into_complete(VaxzevriaVaccine)?;
         let spikevax = spikevax.into_complete(SpikevaxVaccine)?;
         let comirnaty = comirnaty.into_complete(ComirnatyVaccine)?;
-        let covi_shield = covi_shield.into_complete(CoviShieldVaccine)?;
+        let covishield = covi_shield.into_complete(CovishieldVaccine)?;
         let r_covi = r_covi.into_complete(RCoviVaccine)?;
         let recombinant = recombinant.into_complete(RecombinantVaccine)?;
-        let sputnik = sputnik.into_complete(SputnikVaccine)?;
+        let sputnik_v = sputnik_v.into_complete(SputnikVVaccine)?;
 
         Ok(Vaccines {
-            jensen,
+            janssen,
             vaxzevria,
             spikevax,
             comirnaty,
-            covi_shield,
+            covishield,
             r_covi,
             recombinant,
-            sputnik,
+            sputnik_v,
         })
     }
 }
 
+/// Settings for a vaccine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct VaccineSettings {
-    pub start_day_complete: u16,
-    pub end_day_complete: u16,
-    pub start_day_not_complete: u16,
-    pub end_day_not_complete: u16,
+    /// Settings for a complete vaccination cycle.
+    pub complete: Interval,
+
+    /// Settings for an incomplete vaccination cycle.
+    pub not_complete: Interval,
 }
 
 #[derive(Debug, Default)]
 struct PartialVaccineSettings {
-    start_day_complete: Option<u16>,
-    end_day_complete: Option<u16>,
-    start_day_not_complete: Option<u16>,
-    end_day_not_complete: Option<u16>,
+    pub complete: PartialInterval,
+    pub not_complete: PartialInterval,
 }
 
 impl PartialVaccineSettings {
     fn into_complete(self, ty: SettingType) -> Result<VaccineSettings, IncompleteSettings> {
         use SettingName::*;
         let Self {
-            start_day_complete,
-            end_day_complete,
-            start_day_not_complete,
-            end_day_not_complete,
+            complete,
+            not_complete,
         } = self;
 
-        let start_day_complete =
-            start_day_complete.ok_or(IncompleteSettings::IncompleteVaccine(IncompleteSetting {
-                setting: ty,
-                missing_field: VaccineStartDayComplete,
-            }))?;
-        let end_day_complete =
-            end_day_complete.ok_or(IncompleteSettings::IncompleteVaccine(IncompleteSetting {
-                setting: ty,
-                missing_field: VaccineEndDayComplete,
-            }))?;
-        let start_day_not_complete = start_day_not_complete.ok_or(
-            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
-                setting: ty,
-                missing_field: VaccineStartDayNotComplete,
-            }),
+        let complete = complete.into_complete(
+            ty,
+            VaccineStartDayComplete,
+            VaccineEndDayComplete,
+            IncompleteSettings::IncompleteVaccine,
         )?;
-        let end_day_not_complete = end_day_not_complete.ok_or(
-            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
-                setting: ty,
-                missing_field: VaccineEndDayNotComplete,
-            }),
+        let not_complete = not_complete.into_complete(
+            ty,
+            VaccineStartDayNotComplete,
+            VaccineEndDayNotComplete,
+            IncompleteSettings::IncompleteVaccine,
         )?;
 
         Ok(VaccineSettings {
-            start_day_complete,
-            end_day_complete,
-            start_day_not_complete,
-            end_day_not_complete,
+            complete,
+            not_complete,
         })
     }
 }
 
+/// A wrapper to help handling a list a Unique Vaccination Certificate/Assertion Identifiers (UVCIs) that must be considered invalid.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DenyList<'a>(pub Cow<'a, str>);
+pub struct DenyList<'a>(
+    /// The raw representation of the deny list.
+    pub Cow<'a, str>,
+);
 
+/// Minimal app versions by OS.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MinVersions<'a> {
+    /// Minimal app versions for iOS.
     pub ios: Cow<'a, str>,
+
+    /// Minimal app versions for Android.
     pub android: Cow<'a, str>,
 }
 
@@ -523,9 +552,13 @@ impl<'a> PartialMinVersions<'a> {
     }
 }
 
+/// Settings for COVID-19 tests.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Tests {
+    /// Settings for rapid antigenic test.
     pub rapid: TestData,
+
+    /// Settings for molecular test.
     pub molecular: TestData,
 }
 
@@ -591,9 +624,13 @@ impl PartialTests {
     }
 }
 
+/// Settings for a COVID-19 test.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TestData {
+    /// The hours that must pass from the test for its validity.
     pub start_hours: u8,
+
+    /// The hours after which the test is not valid anymore.
     pub end_hours: u8,
 }
 
@@ -603,6 +640,9 @@ struct PartialTestData {
     end_hours: Option<u8>,
 }
 
+// FIXME: what's the meaning of these fields?
+/// Settings for COVID-19 recovery.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Recovery {
     pub cert: Interval,
@@ -622,6 +662,7 @@ struct PartialRecovery {
 impl PartialRecovery {
     fn into_complete(self) -> Result<Recovery, IncompleteSettings> {
         use SettingName::*;
+        use SettingType::*;
 
         let Self {
             cert,
@@ -630,11 +671,30 @@ impl PartialRecovery {
             cert_not_it,
         } = self;
 
-        let cert = cert.into_complete(RecoveryCertStartDay, RecoveryCertEndDay)?;
-        let pv_cert = pv_cert.into_complete(RecoveryPvCertStartDay, RecoveryPvCertEndDay)?;
-        let cert_it = cert_it.into_complete(RecoveryCertStartDayIt, RecoveryCertEndDayIt)?;
-        let cert_not_it =
-            cert_not_it.into_complete(RecoveryCertStartDayNotIt, RecoveryCertEndDayNotIt)?;
+        let cert = cert.into_complete(
+            Generic,
+            RecoveryCertStartDay,
+            RecoveryCertEndDay,
+            IncompleteSettings::IncompleteRecovery,
+        )?;
+        let pv_cert = pv_cert.into_complete(
+            Generic,
+            RecoveryPvCertStartDay,
+            RecoveryPvCertEndDay,
+            IncompleteSettings::IncompleteRecovery,
+        )?;
+        let cert_it = cert_it.into_complete(
+            Generic,
+            RecoveryCertStartDayIt,
+            RecoveryCertEndDayIt,
+            IncompleteSettings::IncompleteRecovery,
+        )?;
+        let cert_not_it = cert_not_it.into_complete(
+            Generic,
+            RecoveryCertStartDayNotIt,
+            RecoveryCertEndDayNotIt,
+            IncompleteSettings::IncompleteRecovery,
+        )?;
 
         Ok(Recovery {
             cert,
@@ -645,16 +705,24 @@ impl PartialRecovery {
     }
 }
 
+/// Interval settings related to generic vaccine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct GenericVaccine {
+    /// Settings for a complete vaccination cycle in Italy.
     pub complete_it: Interval,
+
+    /// Settings for a _booster_ vaccination cycle (complete + dose/recovery) in Italy.
     pub booster_it: Interval,
+
+    /// Settings for a complete vaccination cycle not in Italy.
     pub complete_not_it: Interval,
+
+    /// Settings for a _booster_ vaccination cycle (complete + dose/recovery) not in Italy.
     pub booster_not_it: Interval,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PartialGenericVaccine {
+struct PartialGenericVaccine {
     pub complete_it: PartialInterval,
     pub booster_it: PartialInterval,
     pub complete_not_it: PartialInterval,
@@ -664,6 +732,7 @@ pub struct PartialGenericVaccine {
 impl PartialGenericVaccine {
     fn into_complete(self) -> Result<GenericVaccine, IncompleteSettings> {
         use SettingName::*;
+        use SettingType::*;
 
         let Self {
             complete_it,
@@ -672,14 +741,30 @@ impl PartialGenericVaccine {
             booster_not_it,
         } = self;
 
-        let complete_it =
-            complete_it.into_complete(VaccineStartDayCompleteIt, VaccineEndDayCompleteIt)?;
-        let booster_it =
-            booster_it.into_complete(VaccineStartDayBoosterIt, VaccineEndDayBoosterIt)?;
-        let complete_not_it = complete_not_it
-            .into_complete(VaccineStartDayCompleteNotIt, VaccineEndDayCompleteNotIt)?;
-        let booster_not_it =
-            booster_not_it.into_complete(VaccineStartDayBoosterNotIt, VaccineEndDayBoosterNotIt)?;
+        let complete_it = complete_it.into_complete(
+            Generic,
+            VaccineStartDayCompleteIt,
+            VaccineEndDayCompleteIt,
+            IncompleteSettings::IncompleteGenericVaccine,
+        )?;
+        let booster_it = booster_it.into_complete(
+            Generic,
+            VaccineStartDayBoosterIt,
+            VaccineEndDayBoosterIt,
+            IncompleteSettings::IncompleteGenericVaccine,
+        )?;
+        let complete_not_it = complete_not_it.into_complete(
+            Generic,
+            VaccineStartDayCompleteNotIt,
+            VaccineEndDayCompleteNotIt,
+            IncompleteSettings::IncompleteGenericVaccine,
+        )?;
+        let booster_not_it = booster_not_it.into_complete(
+            Generic,
+            VaccineStartDayBoosterNotIt,
+            VaccineEndDayBoosterNotIt,
+            IncompleteSettings::IncompleteGenericVaccine,
+        )?;
 
         Ok(GenericVaccine {
             complete_it,
@@ -690,103 +775,128 @@ impl PartialGenericVaccine {
     }
 }
 
+/// A interval in days for vaccine validity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Interval {
+    /// The days that must pass from the test for its validity.
     pub start_day: u16,
+
+    /// The days after which the test is not valid anymore.
     pub end_day: u16,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct PartialInterval {
+struct PartialInterval {
     pub start_day: Option<u16>,
     pub end_day: Option<u16>,
 }
 
 impl PartialInterval {
-    fn into_complete(
+    fn into_complete<F>(
         self,
+        setting: SettingType,
         start_name: SettingName,
         end_name: SettingName,
-    ) -> Result<Interval, IncompleteSettings> {
-        use SettingType::*;
-
+        err_fn: F,
+    ) -> Result<Interval, IncompleteSettings>
+    where
+        F: FnOnce(IncompleteSetting) -> IncompleteSettings + Copy,
+    {
         let Self { start_day, end_day } = self;
 
-        let start_day =
-            start_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-                setting: Generic,
+        let start_day = start_day.ok_or_else(|| {
+            err_fn(IncompleteSetting {
+                setting,
                 missing_field: start_name,
-            }))?;
+            })
+        })?;
 
-        let end_day = end_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-            setting: Generic,
-            missing_field: end_name,
-        }))?;
+        let end_day = end_day.ok_or_else(|| {
+            err_fn(IncompleteSetting {
+                setting,
+                missing_field: end_name,
+            })
+        })?;
 
         Ok(Interval { start_day, end_day })
     }
 }
 
+/// The setting types.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[non_exhaustive]
 pub enum SettingType {
+    /// COVID-19 vaccine Janssen (EU/1/20/1525)
     #[serde(rename = "EU/1/20/1525")]
-    JensenVaccine,
+    JanssenVaccine,
 
+    /// Vaxzevria vaccine (EU/1/21/1529)
     #[serde(rename = "EU/1/21/1529")]
     VaxzevriaVaccine,
 
+    /// Spikevax vaccine (EU/1/20/1507)
     #[serde(rename = "EU/1/20/1507")]
     SpikevaxVaccine,
 
+    /// Comirnaty vaccine (EU/1/20/1528)
     #[serde(rename = "EU/1/20/1528")]
     ComirnatyVaccine,
 
+    /// A generic setting.
     #[serde(rename = "GENERIC")]
     Generic,
 
+    /// Minimal app versions by OS.
     #[serde(rename = "APP_MIN_VERSION")]
     AppMinVersion,
 
+    /// Covishield vaccine
     #[serde(rename = "Covishield")]
-    CoviShieldVaccine,
+    CovishieldVaccine,
 
+    /// R-CoVI vaccine
     #[serde(rename = "R-COVI")]
     RCoviVaccine,
 
+    /// Covid-19 (recombinant) vaccine
     #[serde(rename = "Covid-19-recombinant")]
     RecombinantVaccine,
 
+    /// A list of Unique Vaccination Certificate/Assertion Identifiers (UVCIs) that must be
+    /// considered invalid.
     #[serde(rename = "black_list_uvci")]
     DenyList,
 
+    /// Sputnik-V vaccine
     #[serde(rename = "Sputnik-V")]
-    SputnikVaccine,
+    SputnikVVaccine,
 }
 
 impl fmt::Display for SettingType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use SettingType::*;
         let s = match self {
-            JensenVaccine => "Jensen Vaccine (EU/1/20/1525)",
+            JanssenVaccine => "Janssen Vaccine (EU/1/20/1525)",
             VaxzevriaVaccine => "Vaxzevria Vaccine (EU/1/21/1529)",
             SpikevaxVaccine => "Spikevax Vaccine (EU/1/20/1507)",
             ComirnatyVaccine => "Comirnaty Vaccine (EU/1/20/1528)",
             Generic => "Generic (GENERIC)",
             AppMinVersion => "App minimum version (APP_MIN_VERSION)",
-            CoviShieldVaccine => "Covishield Vaccine (Covishield)",
+            CovishieldVaccine => "Covishield Vaccine (Covishield)",
             RCoviVaccine => "R-CoVI (R-COVI)",
             RecombinantVaccine => "Covid-19 vaccine-recombinant (Covid-19-recombinant)",
             DenyList => "Deny list (black_list_uvci)",
-            SputnikVaccine => "Sputnik V Vaccine (Sputnik-V)",
+            SputnikVVaccine => "Sputnik V Vaccine (Sputnik-V)",
         };
         f.write_str(s)
     }
 }
 
+/// The setting names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
+#[allow(missing_docs)]
 pub enum SettingName {
     VaccineStartDayComplete,
     VaccineEndDayComplete,
@@ -830,6 +940,7 @@ pub enum SettingName {
 }
 
 impl SettingName {
+    /// Get a static string representation for the setting name.
     pub fn as_str(self) -> &'static str {
         use SettingName::*;
 
@@ -871,13 +982,26 @@ impl fmt::Display for SettingName {
     }
 }
 
+/// An error for incomplete settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum IncompleteSettings {
+    /// Vaccines section is incomplete.
     IncompleteVaccine(IncompleteSetting),
+
+    /// UVCI deny list is missing.
     MissingDenyList,
+
+    /// Minimal app versions section is incomplete.
     IncompleteMinVersion(IncompleteSetting),
+
+    /// Tests section is incomplete.
     IncompleteTest(IncompleteSetting),
+
+    /// Recovery section is incomplete.
     IncompleteRecovery(IncompleteSetting),
+
+    /// Generic vaccine section is incomplete.
+    IncompleteGenericVaccine(IncompleteSetting),
 }
 
 impl fmt::Display for IncompleteSettings {
@@ -889,21 +1013,29 @@ impl fmt::Display for IncompleteSettings {
             IncompleteVaccine(incomplete)
             | IncompleteMinVersion(incomplete)
             | IncompleteTest(incomplete)
-            | IncompleteRecovery(incomplete) => match self {
+            | IncompleteRecovery(incomplete)
+            | IncompleteGenericVaccine(incomplete) => match self {
                 IncompleteVaccine(_) => write!(f, "incomplete vaccines, {}", incomplete),
                 IncompleteMinVersion(_) => write!(f, "incomplete app min versions, {}", incomplete),
                 IncompleteTest(_) => write!(f, "incomplete tests, {}", incomplete),
                 IncompleteRecovery(_) => write!(f, "incomplete recovery, {}", incomplete),
+                IncompleteGenericVaccine(_) => {
+                    write!(f, "incomplete generic vaccine, {}", incomplete)
+                }
                 MissingDenyList => unreachable!(),
             },
         }
     }
 }
 
+/// Helper structure to identify which pair of setting type and setting name is missing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct IncompleteSetting {
-    setting: SettingType,
-    missing_field: SettingName,
+    /// The setting type.
+    pub setting: SettingType,
+
+    /// The setting name.
+    pub missing_field: SettingName,
 }
 
 impl fmt::Display for IncompleteSetting {
