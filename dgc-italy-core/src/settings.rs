@@ -17,6 +17,7 @@ pub struct Settings<'a> {
     pub min_versions: MinVersions<'a>,
     pub tests: Tests,
     pub recovery: Recovery,
+    pub generic_vaccine: GenericVaccine,
     pub unknown: Vec<RawSetting<'a>>,
 }
 
@@ -27,6 +28,7 @@ struct PartialSettings<'a> {
     min_versions: PartialMinVersions<'a>,
     tests: PartialTests,
     recovery: PartialRecovery,
+    generic_vaccine: PartialGenericVaccine,
     unknown: Vec<RawSetting<'a>>,
 }
 
@@ -48,7 +50,7 @@ impl<'a> PartialSettings<'a> {
                     RCoviVaccine => &mut vaccines.r_covi,
                     RecombinantVaccine => &mut vaccines.recombinant,
                     SputnikVaccine => &mut vaccines.sputnik,
-                    _ => unreachable!(),
+                    Generic | AppMinVersion | DenyList => unreachable!(),
                 };
 
                 InnerField::U16(match name {
@@ -67,17 +69,52 @@ impl<'a> PartialSettings<'a> {
                 RecoveryCertStartDay
                 | RecoveryCertEndDay
                 | RecoveryPvCertStartDay
-                | RecoveryPvCertEndDay => {
+                | RecoveryPvCertEndDay
+                | RecoveryCertStartDayIt
+                | RecoveryCertEndDayIt
+                | RecoveryCertStartDayNotIt
+                | RecoveryCertEndDayNotIt => {
                     let recovery = &mut self.recovery;
                     InnerField::U16(match name {
-                        RecoveryCertStartDay => &mut recovery.cert_start_day,
-                        RecoveryCertEndDay => &mut recovery.cert_end_day,
-                        RecoveryPvCertStartDay => &mut recovery.pv_cert_start_day,
-                        RecoveryPvCertEndDay => &mut recovery.pv_cert_end_day,
+                        RecoveryCertStartDay => &mut recovery.cert.start_day,
+                        RecoveryCertEndDay => &mut recovery.cert.end_day,
+                        RecoveryPvCertStartDay => &mut recovery.pv_cert.start_day,
+                        RecoveryPvCertEndDay => &mut recovery.pv_cert.end_day,
+                        RecoveryCertStartDayIt => &mut recovery.cert_it.start_day,
+                        RecoveryCertEndDayIt => &mut recovery.cert_it.end_day,
+                        RecoveryCertStartDayNotIt => &mut recovery.cert_not_it.start_day,
+                        RecoveryCertEndDayNotIt => &mut recovery.cert_not_it.end_day,
                         _ => unreachable!(),
                     })
                 }
-                _ => return None,
+                VaccineStartDayCompleteIt
+                | VaccineEndDayCompleteIt
+                | VaccineStartDayCompleteNotIt
+                | VaccineEndDayCompleteNotIt
+                | VaccineStartDayBoosterIt
+                | VaccineEndDayBoosterIt
+                | VaccineStartDayBoosterNotIt
+                | VaccineEndDayBoosterNotIt => {
+                    let vaccine = &mut self.generic_vaccine;
+                    InnerField::U16(match name {
+                        VaccineStartDayCompleteIt => &mut vaccine.complete_it.start_day,
+                        VaccineEndDayCompleteIt => &mut vaccine.complete_it.end_day,
+                        VaccineStartDayCompleteNotIt => &mut vaccine.complete_not_it.start_day,
+                        VaccineEndDayCompleteNotIt => &mut vaccine.complete_not_it.end_day,
+                        VaccineStartDayBoosterIt => &mut vaccine.booster_it.start_day,
+                        VaccineEndDayBoosterIt => &mut vaccine.booster_it.end_day,
+                        VaccineStartDayBoosterNotIt => &mut vaccine.booster_not_it.start_day,
+                        VaccineEndDayBoosterNotIt => &mut vaccine.booster_not_it.end_day,
+                        _ => unreachable!(),
+                    })
+                }
+                VaccineStartDayComplete
+                | VaccineEndDayComplete
+                | VaccineStartDayNotComplete
+                | VaccineEndDayNotComplete
+                | Ios
+                | Android
+                | BlackListUvci => unreachable!(),
             },
             AppMinVersion => {
                 let min_ver = &mut self.min_versions;
@@ -269,6 +306,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for Settings<'a> {
             min_versions,
             tests,
             recovery,
+            generic_vaccine,
             unknown,
         } = deserializer.deserialize_seq(SettingsVisitor)?;
 
@@ -279,6 +317,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for Settings<'a> {
         let min_versions = min_versions.into_complete().map_err(de::Error::custom)?;
         let tests = tests.into_complete().map_err(de::Error::custom)?;
         let recovery = recovery.into_complete().map_err(de::Error::custom)?;
+        let generic_vaccine = generic_vaccine.into_complete().map_err(de::Error::custom)?;
 
         Ok(Self {
             vaccines,
@@ -286,6 +325,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for Settings<'a> {
             min_versions,
             tests,
             recovery,
+            generic_vaccine,
             unknown,
         })
     }
@@ -565,59 +605,125 @@ struct PartialTestData {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Recovery {
-    pub cert_start_day: u16,
-    pub cert_end_day: u16,
-    pub pv_cert_start_day: u16,
-    pub pv_cert_end_day: u16,
+    pub cert: Interval,
+    pub pv_cert: Interval,
+    pub cert_it: Interval,
+    pub cert_not_it: Interval,
 }
 
 #[derive(Debug, Default)]
 struct PartialRecovery {
-    cert_start_day: Option<u16>,
-    cert_end_day: Option<u16>,
-    pv_cert_start_day: Option<u16>,
-    pv_cert_end_day: Option<u16>,
+    cert: PartialInterval,
+    pv_cert: PartialInterval,
+    cert_it: PartialInterval,
+    cert_not_it: PartialInterval,
 }
 
 impl PartialRecovery {
     fn into_complete(self) -> Result<Recovery, IncompleteSettings> {
         use SettingName::*;
-        use SettingType::*;
 
         let Self {
-            cert_start_day,
-            cert_end_day,
-            pv_cert_start_day,
-            pv_cert_end_day,
+            cert,
+            pv_cert,
+            cert_it,
+            cert_not_it,
         } = self;
 
-        let cert_start_day =
-            cert_start_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-                setting: Generic,
-                missing_field: RecoveryCertStartDay,
-            }))?;
-        let cert_end_day =
-            cert_end_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-                setting: Generic,
-                missing_field: RecoveryCertEndDay,
-            }))?;
-        let pv_cert_start_day =
-            pv_cert_start_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-                setting: Generic,
-                missing_field: RecoveryPvCertStartDay,
-            }))?;
-        let pv_cert_end_day =
-            pv_cert_end_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
-                setting: Generic,
-                missing_field: RecoveryPvCertEndDay,
-            }))?;
+        let cert = cert.into_complete(RecoveryCertStartDay, RecoveryCertEndDay)?;
+        let pv_cert = pv_cert.into_complete(RecoveryPvCertStartDay, RecoveryPvCertEndDay)?;
+        let cert_it = cert_it.into_complete(RecoveryCertStartDayIt, RecoveryCertEndDayIt)?;
+        let cert_not_it =
+            cert_not_it.into_complete(RecoveryCertStartDayNotIt, RecoveryCertEndDayNotIt)?;
 
         Ok(Recovery {
-            cert_start_day,
-            cert_end_day,
-            pv_cert_start_day,
-            pv_cert_end_day,
+            cert,
+            pv_cert,
+            cert_it,
+            cert_not_it,
         })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct GenericVaccine {
+    pub complete_it: Interval,
+    pub booster_it: Interval,
+    pub complete_not_it: Interval,
+    pub booster_not_it: Interval,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartialGenericVaccine {
+    pub complete_it: PartialInterval,
+    pub booster_it: PartialInterval,
+    pub complete_not_it: PartialInterval,
+    pub booster_not_it: PartialInterval,
+}
+
+impl PartialGenericVaccine {
+    fn into_complete(self) -> Result<GenericVaccine, IncompleteSettings> {
+        use SettingName::*;
+
+        let Self {
+            complete_it,
+            booster_it,
+            complete_not_it,
+            booster_not_it,
+        } = self;
+
+        let complete_it =
+            complete_it.into_complete(VaccineStartDayCompleteIt, VaccineEndDayCompleteIt)?;
+        let booster_it =
+            booster_it.into_complete(VaccineStartDayBoosterIt, VaccineEndDayBoosterIt)?;
+        let complete_not_it = complete_not_it
+            .into_complete(VaccineStartDayCompleteNotIt, VaccineEndDayCompleteNotIt)?;
+        let booster_not_it =
+            booster_not_it.into_complete(VaccineStartDayBoosterNotIt, VaccineEndDayBoosterNotIt)?;
+
+        Ok(GenericVaccine {
+            complete_it,
+            booster_it,
+            complete_not_it,
+            booster_not_it,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Interval {
+    pub start_day: u16,
+    pub end_day: u16,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PartialInterval {
+    pub start_day: Option<u16>,
+    pub end_day: Option<u16>,
+}
+
+impl PartialInterval {
+    fn into_complete(
+        self,
+        start_name: SettingName,
+        end_name: SettingName,
+    ) -> Result<Interval, IncompleteSettings> {
+        use SettingType::*;
+
+        let Self { start_day, end_day } = self;
+
+        let start_day =
+            start_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: Generic,
+                missing_field: start_name,
+            }))?;
+
+        let end_day = end_day.ok_or(IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+            setting: Generic,
+            missing_field: end_name,
+        }))?;
+
+        Ok(Interval { start_day, end_day })
     }
 }
 
@@ -697,6 +803,30 @@ pub enum SettingName {
     BlackListUvci,
     RecoveryPvCertStartDay,
     RecoveryPvCertEndDay,
+    #[serde(rename = "recovery_cert_start_day_IT")]
+    RecoveryCertStartDayIt,
+    #[serde(rename = "recovery_cert_end_day_IT")]
+    RecoveryCertEndDayIt,
+    #[serde(rename = "recovery_cert_start_day_NOT_IT")]
+    RecoveryCertStartDayNotIt,
+    #[serde(rename = "recovery_cert_end_day_NOT_IT")]
+    RecoveryCertEndDayNotIt,
+    #[serde(rename = "vaccine_start_day_complete_IT")]
+    VaccineStartDayCompleteIt,
+    #[serde(rename = "vaccine_end_day_complete_IT")]
+    VaccineEndDayCompleteIt,
+    #[serde(rename = "vaccine_start_day_complete_NOT_IT")]
+    VaccineStartDayCompleteNotIt,
+    #[serde(rename = "vaccine_end_day_complete_NOT_IT")]
+    VaccineEndDayCompleteNotIt,
+    #[serde(rename = "vaccine_start_day_booster_IT")]
+    VaccineStartDayBoosterIt,
+    #[serde(rename = "vaccine_end_day_booster_IT")]
+    VaccineEndDayBoosterIt,
+    #[serde(rename = "vaccine_start_day_booster_NOT_IT")]
+    VaccineStartDayBoosterNotIt,
+    #[serde(rename = "vaccine_end_day_booster_NOT_IT")]
+    VaccineEndDayBoosterNotIt,
 }
 
 impl SettingName {
@@ -719,6 +849,18 @@ impl SettingName {
             BlackListUvci => "black_list_uvci",
             RecoveryPvCertStartDay => "recovery_pv_cert_start_day",
             RecoveryPvCertEndDay => "recovery_pv_cert_end_day",
+            RecoveryCertStartDayIt => "recovery_cert_start_day_IT",
+            RecoveryCertEndDayIt => "recovery_cert_end_day_IT",
+            RecoveryCertStartDayNotIt => "recovery_cert_start_day_NOT_IT",
+            RecoveryCertEndDayNotIt => "recovery_cert_end_day_NOT_IT",
+            VaccineStartDayCompleteIt => "vaccine_start_day_complete_IT",
+            VaccineEndDayCompleteIt => "vaccine_end_day_complete_IT",
+            VaccineStartDayCompleteNotIt => "vaccine_start_day_complete_NOT_IT",
+            VaccineEndDayCompleteNotIt => "vaccine_end_day_complete_NOT_IT",
+            VaccineStartDayBoosterIt => "vaccine_start_day_booster_IT",
+            VaccineEndDayBoosterIt => "vaccine_end_day_booster_IT",
+            VaccineStartDayBoosterNotIt => "vaccine_start_day_booster_NOT_IT",
+            VaccineEndDayBoosterNotIt => "vaccine_end_day_booster_NOT_IT",
         }
     }
 }
