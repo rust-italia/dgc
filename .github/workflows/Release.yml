@@ -23,3 +23,14 @@ jobs:
         run: |
           cargo login ${{ secrets.CARGO_TOKEN }}
           cargo publish
+
+  publish-dgc-italy-core:
+    runs-on: "ubuntu-20.04"
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/dgc-italy-core/')
+    steps:
+      - name: Release Dgc Italy Core on Crates.io
+        working-directory: ./dgc-italy-core
+        run: |
+          cargo login ${{ secrets.CARGO_TOKEN }}
+          cargo publish
