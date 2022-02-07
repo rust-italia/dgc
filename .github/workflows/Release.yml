@@ -6,13 +6,31 @@ on:
       - created
 
 jobs:
-  build:
+  test:
     runs-on: "ubuntu-20.04"
     steps:
       - uses: actions/checkout@v2
       - name: Run tests
         run: cargo test --verbose
-      - name: Release on Crates.io
+
+  publish-dgc:
+    runs-on: "ubuntu-20.04"
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/dgc/')
+    steps:
+      - name: Release Dgc on Crates.io
+        working-directory: ./dgc
+        run: |
+          cargo login ${{ secrets.CARGO_TOKEN }}
+          cargo publish
+
+  publish-dgc-italy-core:
+    runs-on: "ubuntu-20.04"
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/dgc-italy-core/')
+    steps:
+      - name: Release Dgc Italy Core on Crates.io
+        working-directory: ./dgc-italy-core
         run: |
           cargo login ${{ secrets.CARGO_TOKEN }}
           cargo publish

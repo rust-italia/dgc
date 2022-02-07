@@ -1,28 +1,6 @@
-[package]
-name = "dgc"
-version = "0.0.7"
-authors = ["Luciano Mammino"]
-edition = "2018"
-description = "A parser and validator for the EU Digital Green Certificate (dgc) a.k.a. greenpass"
-keywords = ["dgc", "greenpass", "certificate", "cose", "health"]
-categories = ["encoding", "data-structures", "cryptography"]
-repository = "https://github.com/rust-italia/dgc"
-readme = "README.md"
-license = "MIT"
+[workspace]
 
-[dependencies]
-base45 = "3.0.0"
-base64 = "0.13.0"
-ciborium = "0.2.0"
-der-parser = "6.0.0"
-inflate = "0.4.5"
-ring = "0.16.20"
-ring-compat = "0.3.2"
-serde = "1.0.130"
-serde_json = "1.0.64"
-thiserror = "1.0.30"
-x509-parser = { version = "0.12.0", features = ["verify"] }
-
-[dev-dependencies]
-hex = "0.4.3"
-rstest = "0.11.0"
+members = [
+    "dgc",
+    "dgc-italy-core",
+]

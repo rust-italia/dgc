@@ -1,0 +1,12 @@
+[package]
+name = "dgc-italy-core"
+version = "0.0.0"
+edition = "2021"
+keywords = ["dgc", "greenpass", "certificate", "cose", "health", "italy"]
+categories = ["encoding", "data-structures", "cryptography"]
+repository = "https://github.com/rust-italia/dgc"
+readme = "README.md"
+license = "MIT"
+
+[dependencies]
+dgc = { path = "../dgc" }

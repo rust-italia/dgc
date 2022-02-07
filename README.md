@@ -73,13 +73,17 @@ match signature_validity {
 
 ### Other examples?
 
-To get started using `dgc`, see the [`examples`](https://github.com/rust-italia/dgc/tree/main/examples) or the [docs](https://docs.rs/dgc).
+To get started using `dgc`, see the [`examples`](https://github.com/rust-italia/dgc/tree/main/dgc/examples) or the [docs](https://docs.rs/dgc).
 
 If you clone the repository locally, you can easily run the example files with:
 
 ```bash
 cargo run --example <name of example file>
 ```
+
+## Italian support
+
+Do you need support for Italian validation rules? Check [`dgc-italy-core`](https://github.com/rust-italia/dgc/tree/main/dgc-italy-core)!
 
 
 ## Data structure
