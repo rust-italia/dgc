@@ -147,36 +147,51 @@ impl<'a> PartialSettings<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum InnerField<'a: 'b, 'b> {
     U8(&'b mut Option<u8>),
     U16(&'b mut Option<u16>),
     Str(&'b mut Option<&'a str>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum InnerFieldOwned<'a> {
     U8(u8),
     U16(u16),
     Str(&'a str),
 }
 
+#[derive(Debug, PartialEq)]
+enum InnerFieldError {
+    U8,
+    U16,
+}
+
+impl de::Expected for InnerFieldError {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::U8 => formatter.write_str("a u8 str"),
+            Self::U16 => formatter.write_str("a u16 str"),
+        }
+    }
+}
+
 impl<'a: 'b, 'b> InnerField<'a, 'b> {
-    fn try_set(&mut self, raw: &'a str) -> Result<Option<InnerFieldOwned<'a>>, &str> {
+    fn try_set(&mut self, raw: &'a str) -> Result<Option<InnerFieldOwned<'a>>, InnerFieldError> {
         use InnerField::*;
         Ok(match self {
             U8(value) => value
-                .replace(raw.parse().map_err(|_| "u8 str")?)
+                .replace(raw.parse().map_err(|_| InnerFieldError::U8)?)
                 .map(InnerFieldOwned::U8),
             U16(value) => value
-                .replace(raw.parse().map_err(|_| "u16 str")?)
+                .replace(raw.parse().map_err(|_| InnerFieldError::U16)?)
                 .map(InnerFieldOwned::U16),
             Str(s) => s.replace(raw).map(InnerFieldOwned::Str),
         })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Setting<'a> {
     Raw(RawSetting<'a>),
     Parsed {
@@ -236,9 +251,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for Setting<'a> {
                         }
                         "value" => {
                             if value.replace(val).is_some() {
-                                return Err(de::Error::custom(
-                                    "type field found more than one time",
-                                ));
+                                return Err(de::Error::duplicate_field("value"));
                             }
                         }
                         _ => {
@@ -1045,5 +1058,272 @@ impl fmt::Display for IncompleteSetting {
             r#"setting = "{}", missing field = "{}""#,
             self.setting, self.missing_field
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn inner_field_try_set() {
+        let mut value = Some(42);
+        let mut inner_field = InnerField::U8(&mut value);
+
+        assert_eq!(inner_field.try_set("24"), Ok(Some(InnerFieldOwned::U8(42))));
+        assert_eq!(inner_field, InnerField::U8(&mut Some(24)));
+
+        assert_eq!(inner_field.try_set("12a"), Err(InnerFieldError::U8));
+        assert_eq!(inner_field, InnerField::U8(&mut Some(24)));
+        assert_eq!(value, Some(24));
+
+        let mut value = Some("hello world");
+        let mut inner_field = InnerField::Str(&mut value);
+
+        assert_eq!(
+            inner_field.try_set("12a"),
+            Ok(Some(InnerFieldOwned::Str("hello world")))
+        );
+        assert_eq!(inner_field, InnerField::Str(&mut Some("12a")));
+        assert_eq!(value, Some("12a"));
+
+        let mut value = None;
+        let mut inner_field = InnerField::U16(&mut value);
+
+        assert_eq!(inner_field.try_set("24"), Ok(None));
+        assert_eq!(inner_field, InnerField::U16(&mut Some(24)));
+    }
+
+    #[test]
+    fn deserialize_setting() {
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525",
+            "value": "0"
+        }"#;
+
+        let setting: Setting = serde_json::from_str(data).unwrap();
+        assert_eq!(
+            setting,
+            Setting::Parsed {
+                name: SettingName::VaccineStartDayComplete,
+                ty: SettingType::JanssenVaccine,
+                value: "0"
+            }
+        );
+    }
+
+    #[test]
+    fn deserialize_invalid_setting() {
+        let data = r#"{
+            "name": "vaccine_start_day_complet",
+            "type": "EU/1/20/1525",
+            "value": "0"
+        }"#;
+
+        let setting: Setting = serde_json::from_str(data).unwrap();
+        assert_eq!(
+            setting,
+            Setting::Raw(RawSetting {
+                name: "vaccine_start_day_complet".into(),
+                ty: "EU/1/20/1525".into(),
+                value: "0".into(),
+            })
+        );
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525",
+            "value": 0
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525",
+            "value": "0"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525",
+            "type": "EU/1/20/1525",
+            "value": "0"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525",
+            "value": "0",
+            "value": "0"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "type": "EU/1/20/1525",
+            "value": "0"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "value": "0"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+
+        let data = r#"{
+            "name": "vaccine_start_day_complete",
+            "type": "EU/1/20/1525"
+        }"#;
+        assert!(serde_json::from_str::<Setting>(data).is_err());
+    }
+
+    #[test]
+    fn partial_vaccine_settings_into_complete() {
+        assert_eq!(
+            PartialVaccineSettings {
+                complete: PartialInterval {
+                    start_day: Some(0),
+                    end_day: Some(1)
+                },
+                not_complete: PartialInterval {
+                    start_day: Some(2),
+                    end_day: Some(3)
+                },
+            }
+            .into_complete(SettingType::SpikevaxVaccine)
+            .unwrap(),
+            VaccineSettings {
+                complete: Interval {
+                    start_day: 0,
+                    end_day: 1
+                },
+                not_complete: Interval {
+                    start_day: 2,
+                    end_day: 3
+                }
+            }
+        );
+
+        assert_eq!(
+            PartialVaccineSettings {
+                complete: PartialInterval {
+                    start_day: None,
+                    end_day: Some(1)
+                },
+                not_complete: PartialInterval {
+                    start_day: Some(2),
+                    end_day: Some(3)
+                },
+            }
+            .into_complete(SettingType::SpikevaxVaccine)
+            .unwrap_err(),
+            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
+                setting: SettingType::SpikevaxVaccine,
+                missing_field: SettingName::VaccineStartDayComplete,
+            })
+        );
+
+        assert_eq!(
+            PartialVaccineSettings {
+                complete: PartialInterval {
+                    start_day: Some(0),
+                    end_day: None
+                },
+                not_complete: PartialInterval {
+                    start_day: Some(2),
+                    end_day: Some(3)
+                },
+            }
+            .into_complete(SettingType::SpikevaxVaccine)
+            .unwrap_err(),
+            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
+                setting: SettingType::SpikevaxVaccine,
+                missing_field: SettingName::VaccineEndDayComplete,
+            })
+        );
+
+        assert_eq!(
+            PartialVaccineSettings {
+                complete: PartialInterval {
+                    start_day: Some(0),
+                    end_day: Some(1)
+                },
+                not_complete: PartialInterval {
+                    start_day: None,
+                    end_day: Some(3)
+                },
+            }
+            .into_complete(SettingType::SpikevaxVaccine)
+            .unwrap_err(),
+            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
+                setting: SettingType::SpikevaxVaccine,
+                missing_field: SettingName::VaccineStartDayNotComplete,
+            })
+        );
+
+        assert_eq!(
+            PartialVaccineSettings {
+                complete: PartialInterval {
+                    start_day: Some(0),
+                    end_day: Some(1)
+                },
+                not_complete: PartialInterval {
+                    start_day: Some(2),
+                    end_day: None
+                },
+            }
+            .into_complete(SettingType::SpikevaxVaccine)
+            .unwrap_err(),
+            IncompleteSettings::IncompleteVaccine(IncompleteSetting {
+                setting: SettingType::SpikevaxVaccine,
+                missing_field: SettingName::VaccineEndDayNotComplete,
+            })
+        );
+    }
+
+    #[test]
+    fn partial_min_versions_into_complete() {
+        assert_eq!(
+            PartialMinVersions {
+                ios: Some("ios"),
+                android: Some("android")
+            }
+            .into_complete()
+            .unwrap(),
+            MinVersions {
+                ios: "ios".into(),
+                android: "android".into(),
+            },
+        );
+
+        assert_eq!(
+            PartialMinVersions {
+                ios: None,
+                android: Some("android"),
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteMinVersion(IncompleteSetting {
+                setting: SettingType::AppMinVersion,
+                missing_field: SettingName::Ios,
+            })
+        );
+
+        assert_eq!(
+            PartialMinVersions {
+                ios: Some("ios"),
+                android: None,
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteMinVersion(IncompleteSetting {
+                setting: SettingType::AppMinVersion,
+                missing_field: SettingName::Android,
+            })
+        );
     }
 }
