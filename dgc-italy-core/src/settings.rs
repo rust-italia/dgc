@@ -1326,4 +1326,711 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn partial_tests_into_complete() {
+        assert_eq!(
+            PartialTests {
+                rapid: PartialTestData {
+                    start_hours: Some(1),
+                    end_hours: Some(2),
+                },
+                molecular: PartialTestData {
+                    start_hours: Some(3),
+                    end_hours: Some(4),
+                }
+            }
+            .into_complete()
+            .unwrap(),
+            Tests {
+                rapid: TestData {
+                    start_hours: 1,
+                    end_hours: 2,
+                },
+                molecular: TestData {
+                    start_hours: 3,
+                    end_hours: 4,
+                }
+            },
+        );
+
+        assert_eq!(
+            PartialTests {
+                rapid: PartialTestData {
+                    start_hours: Some(1),
+                    end_hours: None,
+                },
+                molecular: PartialTestData {
+                    start_hours: Some(3),
+                    end_hours: Some(4),
+                }
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteTest(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RapidTestEndHours
+            })
+        );
+
+        assert_eq!(
+            PartialTests {
+                rapid: PartialTestData {
+                    start_hours: Some(1),
+                    end_hours: Some(2),
+                },
+                molecular: PartialTestData {
+                    start_hours: None,
+                    end_hours: Some(4),
+                }
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteTest(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::MolecularTestStartHours,
+            })
+        );
+
+        assert_eq!(
+            PartialTests {
+                rapid: PartialTestData {
+                    start_hours: Some(1),
+                    end_hours: Some(2),
+                },
+                molecular: PartialTestData {
+                    start_hours: Some(3),
+                    end_hours: None,
+                }
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteTest(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::MolecularTestEndHours,
+            })
+        );
+    }
+
+    #[test]
+    fn partial_recovery_into_complete() {
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap(),
+            Recovery {
+                cert: Interval {
+                    start_day: 1,
+                    end_day: 2,
+                },
+                pv_cert: Interval {
+                    start_day: 3,
+                    end_day: 4,
+                },
+                cert_it: Interval {
+                    start_day: 5,
+                    end_day: 6,
+                },
+                cert_not_it: Interval {
+                    start_day: 7,
+                    end_day: 8,
+                },
+            }
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: None,
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertStartDay,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: None,
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertEndDay,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: None,
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryPvCertStartDay,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: None,
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryPvCertEndDay,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertStartDayIt,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: None,
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertEndDayIt,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertStartDayNotIt,
+            })
+        );
+
+        assert_eq!(
+            PartialRecovery {
+                cert: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                pv_cert: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                cert_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                cert_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: None,
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteRecovery(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::RecoveryCertEndDayNotIt,
+            })
+        );
+    }
+
+    #[test]
+    fn partial_generic_vaccine_into_complete() {
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap(),
+            GenericVaccine {
+                complete_it: Interval {
+                    start_day: 1,
+                    end_day: 2,
+                },
+                booster_it: Interval {
+                    start_day: 3,
+                    end_day: 4
+                },
+                complete_not_it: Interval {
+                    start_day: 5,
+                    end_day: 6,
+                },
+                booster_not_it: Interval {
+                    start_day: 7,
+                    end_day: 8,
+                },
+            }
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineStartDayCompleteIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: None,
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineEndDayCompleteIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineStartDayBoosterIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: None,
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineEndDayBoosterIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineStartDayCompleteNotIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: None,
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineEndDayCompleteNotIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: None,
+                    end_day: Some(8),
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineStartDayBoosterNotIt,
+            })
+        );
+
+        assert_eq!(
+            PartialGenericVaccine {
+                complete_it: PartialInterval {
+                    start_day: Some(1),
+                    end_day: Some(2),
+                },
+                booster_it: PartialInterval {
+                    start_day: Some(3),
+                    end_day: Some(4),
+                },
+                complete_not_it: PartialInterval {
+                    start_day: Some(5),
+                    end_day: Some(6),
+                },
+                booster_not_it: PartialInterval {
+                    start_day: Some(7),
+                    end_day: None,
+                },
+            }
+            .into_complete()
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::Generic,
+                missing_field: SettingName::VaccineEndDayBoosterNotIt,
+            })
+        );
+    }
+
+    #[test]
+    fn partial_interval_into_complete() {
+        assert_eq!(
+            PartialInterval {
+                start_day: Some(1),
+                end_day: Some(2),
+            }
+            .into_complete(
+                SettingType::RCoviVaccine,
+                SettingName::Ios,
+                SettingName::Android,
+                IncompleteSettings::IncompleteGenericVaccine,
+            )
+            .unwrap(),
+            Interval {
+                start_day: 1,
+                end_day: 2,
+            }
+        );
+
+        assert_eq!(
+            PartialInterval {
+                start_day: None,
+                end_day: Some(2),
+            }
+            .into_complete(
+                SettingType::RCoviVaccine,
+                SettingName::Ios,
+                SettingName::Android,
+                IncompleteSettings::IncompleteGenericVaccine,
+            )
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::RCoviVaccine,
+                missing_field: SettingName::Ios,
+            })
+        );
+
+        assert_eq!(
+            PartialInterval {
+                start_day: Some(1),
+                end_day: None,
+            }
+            .into_complete(
+                SettingType::RCoviVaccine,
+                SettingName::Ios,
+                SettingName::Android,
+                IncompleteSettings::IncompleteGenericVaccine,
+            )
+            .unwrap_err(),
+            IncompleteSettings::IncompleteGenericVaccine(IncompleteSetting {
+                setting: SettingType::RCoviVaccine,
+                missing_field: SettingName::Android,
+            })
+        );
+    }
+
+    #[test]
+    fn setting_name_as_str_matches_deserialize() {
+        use SettingName::*;
+
+        const SETTING_NAMES: [SettingName; 27] = [
+            VaccineStartDayComplete,
+            VaccineEndDayComplete,
+            VaccineStartDayNotComplete,
+            VaccineEndDayNotComplete,
+            RapidTestStartHours,
+            RapidTestEndHours,
+            MolecularTestStartHours,
+            MolecularTestEndHours,
+            RecoveryCertStartDay,
+            RecoveryCertEndDay,
+            Ios,
+            Android,
+            BlackListUvci,
+            RecoveryPvCertStartDay,
+            RecoveryPvCertEndDay,
+            RecoveryCertStartDayIt,
+            RecoveryCertEndDayIt,
+            RecoveryCertStartDayNotIt,
+            RecoveryCertEndDayNotIt,
+            VaccineStartDayCompleteIt,
+            VaccineEndDayCompleteIt,
+            VaccineStartDayCompleteNotIt,
+            VaccineEndDayCompleteNotIt,
+            VaccineStartDayBoosterIt,
+            VaccineEndDayBoosterIt,
+            VaccineStartDayBoosterNotIt,
+            VaccineEndDayBoosterNotIt,
+        ];
+
+        for setting_name in SETTING_NAMES {
+            assert_eq!(
+                SettingName::deserialize::<StrDeserializer<de::value::Error>>(
+                    setting_name.as_str().into_deserializer()
+                )
+                .unwrap(),
+                setting_name,
+            );
+        }
+    }
 }
