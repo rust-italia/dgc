@@ -1,0 +1,9 @@
+include_guard = "DGC_H"
+include_version = true
+language = "C"
+cpp_compat = true
+
+[export.rename]
+"ParseError" = "DgcParseError"
+"SignatureValidity" = "DgcValidity"
+"TrustList" = "DgcTrustList"

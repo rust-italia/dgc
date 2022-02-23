@@ -10,6 +10,10 @@ mod test;
 mod trustlist;
 mod vaccination;
 mod valuesets;
+
+#[cfg(feature = "capi")]
+mod capi;
+
 pub use crate::dgc::*;
 pub use cwt::*;
 pub use dgc_container::*;
